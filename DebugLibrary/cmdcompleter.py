@@ -1,3 +1,5 @@
+import re
+
 from prompt_toolkit.completion import Completer, Completion
 
 from .robotkeyword import parse_keyword
@@ -20,8 +22,8 @@ class CmdCompleter(Completer):
         """Using Cmd.py's completer to complete arguments."""
         end_idx = document.cursor_position_col
         line = document.current_line
-        if line[:end_idx].rfind(' ') >= 0:
-            begin_idx = line[:end_idx].rfind(' ') + 1
+        if line[:end_idx].rfind(" ") >= 0:
+            begin_idx = line[:end_idx].rfind(" ") + 1
         else:
             begin_idx = 0
         prefix = line[begin_idx:end_idx]
@@ -33,31 +35,43 @@ class CmdCompleter(Completer):
     def _get_custom_completions(self, cmd_name, document):
         completer = getattr(
             self.cmd_repl,
-            'complete_{0}'.format(cmd_name),
+            "complete_{0}".format(cmd_name),
             None,
         )
         if completer:
             yield from self._get_argument_completions(completer, document)
 
     def _get_command_completions(self, text):
-        return (Completion(name,
-                           -len(text),
-                           display=self.displays.get(name, ''),
-                           display_meta=self.display_metas.get(name, ''),
-                           )
-                for name in self.names
-                if ((('.' not in name and '.' not in text)  # root level
-                     or ('.' in name and '.' in text))  # library level
-                    and name.lower().strip().startswith(text.strip()))
-                )
+        return (
+            Completion(
+                name,
+                -len(text),
+                display=self.displays.get(name, ""),
+                display_meta=self.display_metas.get(name, ""),
+            )
+            for name in self.names
+            if (
+                (
+                    ("." not in name and "." not in text)  # root level
+                    or ("." in name and "." in text)
+                )  # library level
+                and name.lower().strip().startswith(text.strip())
+            )
+        )
 
     def get_completions(self, document, complete_event):
         """Compute suggestions."""
         text = document.text_before_cursor.lower()
         parts = parse_keyword(text)
-
         if len(parts) >= 2:
-            cmd_name = parts[0].strip()
-            yield from self._get_custom_completions(cmd_name, document)
+            # cmd_name = parts[0].strip()
+            keyword = ""
+            for index, part in enumerate(parts):
+                if part.strip() and not re.fullmatch(r"[$@&]\{.+\}", part.strip()):
+                    if index >= len(parts) - 1:
+                        yield from self._get_command_completions(part.strip())
+
+            # print("keyword", cmd_name)
+            # yield from self._get_custom_completions(cmd_name, document)
         else:
             yield from self._get_command_completions(text)

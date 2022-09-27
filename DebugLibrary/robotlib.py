@@ -19,7 +19,7 @@ def get_libs_dict():
     return {lib.name: lib for lib in IMPORTER._library_cache._items}
 
 
-def match_libs(name=''):
+def match_libs(name=""):
     """Find libraries by prefix of library name, default all"""
     libs = [_.name for _ in get_libs()]
     matched = [_ for _ in libs if _.lower().startswith(name.lower())]
@@ -27,7 +27,6 @@ def match_libs(name=''):
 
 
 class ImportedLibraryDocBuilder(LibraryDocBuilder):
-
     def build(self, lib):
         libdoc = LibraryDoc(
             name=lib.name,

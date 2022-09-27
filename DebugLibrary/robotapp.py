@@ -1,4 +1,3 @@
-
 from robot.api import logger
 from robot.libraries.BuiltIn import BuiltIn
 from robot.running.signalhandler import STOP_SIGNAL_MONITOR
@@ -14,4 +13,4 @@ def reset_robotframework_exception():
     if STOP_SIGNAL_MONITOR._signal_count:
         STOP_SIGNAL_MONITOR._signal_count = 0
         STOP_SIGNAL_MONITOR._running_keyword = True
-        logger.info('Reset last exception of DebugLibrary')
+        logger.info("Reset last exception of DebugLibrary")
