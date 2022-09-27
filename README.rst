@@ -7,6 +7,9 @@ Debug Library for Robot Framework
 Introduction
 ------------
 
+This Library is a Fork by René Rohner from the original robotframework-debuglibrary by Xie Yanbo
+
+
 Robotframework-DebugLibrary is a debug library for `RobotFramework`_,
 which can be used as an interactive shell(REPL) also.
 
@@ -56,9 +59,8 @@ NOTICE: 2.0 is not compatible with python 2
 *******************************************
 
 ``DebugLibrary`` >= 2.0.0 supports Python versions 3.x only.
-If you still using python 2.7, please use ``DebugLibrary`` < 2.0.0 ::
 
-    pip install 'robotframework-debuglibrary<2'
+    pip install 'robotframework-debug'
 
 Usage
 -----

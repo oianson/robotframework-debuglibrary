@@ -1,3 +1,9 @@
 include ChangeLog
 include LICENSE
 include README.rst
+
+# added by check-manifest
+include *.yml
+include .coveragerc
+recursive-include tests *.py
+recursive-include tests *.robot

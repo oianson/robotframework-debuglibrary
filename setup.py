@@ -25,12 +25,13 @@ def find_version(*file_paths):
 
 
 setup(
-    name="robotframework-debuglibrary",
+    name="robotframework-debug",
     version=find_version("DebugLibrary/version.py"),
-    description="RobotFramework debug library and an interactive shell",
+    description="RobotFramework debug shell",
     long_description=read("README.rst"),
-    author="Xie Yanbo",
-    author_email="xieyanbo@gmail.com",
+    long_description_content_type=("text/x-rst"),
+    author="René Rohner",
+    author_email="snooz@postoe.de",
     license="New BSD",
     packages=["DebugLibrary"],
     entry_points={
@@ -40,7 +41,7 @@ setup(
         ],
     },
     zip_safe=False,
-    url="https://github.com/xyb/robotframework-debuglibrary/",
+    url="https://github.com/imbus/robotframework-debug/",
     keywords="robotframework,debug,shell,repl",
     install_requires=[
         "prompt-toolkit >= 3",
