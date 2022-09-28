@@ -64,14 +64,9 @@ class CmdCompleter(Completer):
         text = document.text_before_cursor.lower()
         parts = parse_keyword(text)
         if len(parts) >= 2:
-            # cmd_name = parts[0].strip()
-            keyword = ""
             for index, part in enumerate(parts):
-                if part.strip() and not re.fullmatch(r"[$@&]\{.+\}", part.strip()):
+                if part.strip() and not re.fullmatch(r"[$@&]{.+}", part.strip()):
                     if index >= len(parts) - 1:
                         yield from self._get_command_completions(part.strip())
-
-            # print("keyword", cmd_name)
-            # yield from self._get_custom_completions(cmd_name, document)
         else:
             yield from self._get_command_completions(text)

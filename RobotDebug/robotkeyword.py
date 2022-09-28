@@ -1,14 +1,10 @@
 import re
 
 from robot.libraries.BuiltIn import BuiltIn
+from robot.variables.search import is_variable
 
 from .robotlib import ImportedLibraryDocBuilder, get_libs
 from .robotvar import assign_variable
-
-try:
-    from robot.variables.search import is_variable
-except ImportError:
-    from robot.variables import is_var as is_variable  # robotframework < 3.2
 
 KEYWORD_SEP = re.compile("  +|\t")
 
@@ -100,4 +96,4 @@ def run_keyword(robot_instance, keyword):
 def run_debug_if(condition, *args):
     """Runs DEBUG if condition is true."""
 
-    return BuiltIn().run_keyword_if(condition, "DebugLibrary.DEBUG", *args)
+    return BuiltIn().run_keyword_if(condition, "RobotDebug.DEBUG", *args)

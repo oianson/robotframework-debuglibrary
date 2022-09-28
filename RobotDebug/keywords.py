@@ -1,6 +1,6 @@
 import sys
 
-from robot.libraries.BuiltIn import run_keyword_variant
+from robot.libraries.BuiltIn import BuiltIn
 
 from .debugcmd import DebugCmd
 from .steplistener import RobotLibraryStepListenerMixin, is_step_mode
@@ -9,6 +9,15 @@ from .styles import print_output
 
 class DebugKeywords(RobotLibraryStepListenerMixin):
     """Debug Keywords for RobotFramework."""
+
+    def Library(self, name, *args):
+        BuiltIn().import_library(name, *args)
+
+    def Resource(self, path):
+        BuiltIn().import_resource(path)
+
+    def Variables(self, path, *args):
+        BuiltIn().import_variables(path, *args)
 
     def debug(self):
         """Open a interactive shell, run any RobotFramework keywords.

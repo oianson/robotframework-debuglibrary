@@ -50,8 +50,7 @@ def find_runner_step():
     stack = inspect.stack()
     for frame in stack:
         if (
-            frame.function == "run_steps"  # RobotFramework < 4.0
-            or frame.function == "run"
+            frame.function == "run_steps" or frame.function == "run"  # RobotFramework < 4.0
         ):  # RobotFramework >= 4.0
             arginfo = inspect.getargvalues(frame.frame)
             context.current_runner = arginfo.locals.get("runner")

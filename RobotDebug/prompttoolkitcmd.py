@@ -20,7 +20,6 @@ from pygments.lexers.robotframework import (
     VariableTokenizer,
     _Table,
 )
-from pygments.token import Token
 
 
 class KeywordCall(Tokenizer):
@@ -148,7 +147,11 @@ def _(event):
     """
     b: Buffer = event.app.current_buffer
     if b.complete_state:
-        b.apply_completion(b.complete_state.current_completion)
+        completion = b.complete_state.current_completion
+        if completion:
+            b.apply_completion(completion)
+        else:
+            b.cancel_completion()
     else:
         b.insert_text("    ")
 
@@ -198,9 +201,7 @@ class BaseCmd(cmd.Cmd):
 
     def get_helps(self):
         """Get all help documents of commands."""
-        return [
-            (name, self.get_help_string(name) or name) for name in self.get_cmd_names()
-        ]
+        return [(name, self.get_help_string(name) or name) for name in self.get_cmd_names()]
 
     def get_completer(self):
         """Get completer instance."""

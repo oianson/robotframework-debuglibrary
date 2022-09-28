@@ -10,9 +10,7 @@ ROOT = os.path.abspath(os.path.dirname(__file__))
 
 
 def read(*names, **kwargs):
-    with io.open(
-        os.path.join(ROOT, *names), encoding=kwargs.get("encoding", "utf8")
-    ) as fp:
+    with io.open(os.path.join(ROOT, *names), encoding=kwargs.get("encoding", "utf8")) as fp:
         return fp.read()
 
 
@@ -26,30 +24,26 @@ def find_version(*file_paths):
 
 setup(
     name="robotframework-debug",
-    version=find_version("DebugLibrary/version.py"),
+    version=find_version("RobotDebug/version.py"),
     description="RobotFramework debug shell",
     long_description=read("README.rst"),
     long_description_content_type=("text/x-rst"),
     author="René Rohner",
     author_email="snooz@postoe.de",
     license="New BSD",
-    packages=["DebugLibrary"],
+    packages=["RobotDebug"],
     entry_points={
         "console_scripts": [
-            "rfshell = DebugLibrary.shell:shell",
-            "rfdebug = DebugLibrary.shell:shell",
+            "irobot = RobotDebug.shell:shell",
+            "robotdebug = RobotDebug.shell:shell",
         ],
     },
     zip_safe=False,
     url="https://github.com/imbus/robotframework-debug/",
     keywords="robotframework,debug,shell,repl",
-    install_requires=[
-        "prompt-toolkit >= 3",
-        "robotframework >= 5.0",
-        "pygments"
-    ],
+    install_requires=["prompt-toolkit >= 3", "robotframework >= 5.0", "pygments"],
     python_requires=">=3.7.0",
-    tests_require=["pexpect", "coverage"],
+    tests_require=["pexpect", "coverage", "docutils"],
     test_suite="tests.test_debuglibrary.suite",
     platforms=["Linux", "Unix", "Windows", "MacOS X"],
     classifiers=[

@@ -9,15 +9,9 @@ from .prompttoolkitcmd import PromptToolkitCmd
 from .robotapp import get_robot_instance, reset_robotframework_exception
 from .robotkeyword import find_keyword, get_keywords, get_lib_keywords, run_keyword
 from .robotlib import get_builtin_libs, get_libs, get_libs_dict, match_libs
-from .robotselenium import SELENIUM_WEBDRIVERS, start_selenium_commands
 from .sourcelines import RobotNeedUpgrade, print_source_lines, print_test_case_lines
 from .steplistener import is_step_mode, set_step_mode
-from .styles import (
-    DEBUG_PROMPT_STYLE,
-    get_debug_prompt_tokens,
-    print_error,
-    print_output,
-)
+from .styles import DEBUG_PROMPT_STYLE, get_debug_prompt_tokens, print_error, print_output
 
 HISTORY_PATH = os.environ.get("RFDEBUG_HISTORY", "~/.rfdebug_history")
 
@@ -51,9 +45,7 @@ class DebugCmd(PromptToolkitCmd):
     prompt_style = DEBUG_PROMPT_STYLE
 
     def __init__(self, completekey="tab", stdin=None, stdout=None):
-        PromptToolkitCmd.__init__(
-            self, completekey, stdin, stdout, history_path=HISTORY_PATH
-        )
+        PromptToolkitCmd.__init__(self, completekey, stdin, stdout, history_path=HISTORY_PATH)
         self.robot = get_robot_instance()
 
     def get_prompt_tokens(self, prompt_text):
@@ -76,7 +68,7 @@ Input Robotframework keywords, or commands listed below.
 Use "libs" or "l" to see available libraries,
 use "keywords" or "k" see the list of library keywords,
 use the TAB keyboard key to autocomplete keywords.
-Access https://github.com/xyb/robotframework-debuglibrary for more details.\
+Access https://github.com/imbus/robotframework-debug for more details.\
 """
             )
 
@@ -199,9 +191,7 @@ Access https://github.com/xyb/robotframework-debuglibrary for more details.\
         elif len(keywords) == 1:
             logger.console(keywords[0]["doc"])
         else:
-            print_error(
-                "< found {} keywords".format(len(keywords)), ", ".join(keywords)
-            )
+            print_error("< found {} keywords".format(len(keywords)), ", ".join(keywords))
 
     do_d = do_docs
 

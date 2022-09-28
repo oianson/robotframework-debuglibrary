@@ -1,5 +1,5 @@
 *** Settings ***
-Library  DebugLibrary
+Library  RobotDebug
 
 ** test case **
 test1

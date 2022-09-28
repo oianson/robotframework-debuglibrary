@@ -5,7 +5,7 @@ import tempfile
 from robot import run_cli
 
 TEST_SUITE = b"""*** Settings ***
-Library  DebugLibrary
+Library  RobotDebug
 
 ** test case **
 RFDEBUG REPL
@@ -41,5 +41,5 @@ def shell():
 
 
 if __name__ == "__main__":
-    # Usage: python -m DebugLibrary.shell
+    # Usage: python -m RobotDebug.shell
     shell()
