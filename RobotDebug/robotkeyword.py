@@ -1,4 +1,5 @@
 import re
+from typing import Tuple, List
 
 from robot.libraries.BuiltIn import BuiltIn
 from robot.variables.search import is_variable
@@ -11,10 +12,21 @@ KEYWORD_SEP = re.compile("  +|\t")
 _lib_keywords_cache = {}
 
 
-def parse_keyword(command):
+def parse_keyword(command) -> Tuple[List[str], str, List[str]]:
     """Split a robotframework keyword string."""
     # TODO use robotframework functions
-    return KEYWORD_SEP.split(command)
+    variables = []
+    keyword = ""
+    args = []
+    parts = KEYWORD_SEP.split(command)
+    for part in parts:
+        if not keyword and is_variable(part.rstrip("=").strip()):
+            variables.append(part.rstrip("=").strip())
+        elif not keyword:
+            keyword = part
+        else:
+            args.append(part)
+    return variables, keyword, args
 
 
 def get_lib_keywords(library):
@@ -54,43 +66,44 @@ def find_keyword(keyword_name):
     ]
 
 
-def _execute_variable(robot_instance, variable_name, keyword, args):
-    variable_only = not args
-    if variable_only:
-        display_value = ["Log to console", keyword]
-        robot_instance.run_keyword(*display_value)
+def _execute_variable(robot_instance: BuiltIn, variables, keyword, args) -> List[Tuple[str, str]]:
+    if not keyword:
+        logs = []
+        for variable in variables:
+            value = robot_instance.get_variable_value(variable)
+            logs.append(("#", f"{variable} = {value!r}"))
+        return logs
     else:
-        variable_value = assign_variable(
-            robot_instance,
-            variable_name,
-            args,
-        )
-        echo = "{0} = {1!r}".format(variable_name, variable_value)
-        return ("#", echo)
+        return_values = robot_instance.run_keyword(keyword, *args)
+        if len(variables) == 1:
+            robot_instance.set_local_variable(variables[0], return_values)
+            return [("#", f"{variables[0]} = {return_values!r}")]
+        logs = []
+        for variable, value in zip(variables, return_values):
+            robot_instance.set_local_variable(variable, value)
+            logs.append(("#", f"{variable} = {value!r}"))
+        return logs
 
 
-def run_keyword(robot_instance, keyword):
+def run_keyword(robot_instance, keyword) -> List[Tuple[str, str]]:
     """Run a keyword in robotframewrk environment."""
     if not keyword:
-        return
+        return []
 
-    keyword_args = parse_keyword(keyword)
-    keyword = keyword_args[0]
-    args = keyword_args[1:]
+    variables, keyword, args = parse_keyword(keyword)
 
     is_comment = keyword.strip().startswith("#")
     if is_comment:
-        return
+        return []
 
-    variable_name = keyword.rstrip("= ")
-    if is_variable(variable_name):
-        return _execute_variable(robot_instance, variable_name, keyword, args)
+    if variables:
+        return _execute_variable(robot_instance, variables, keyword, args)
     else:
         output = robot_instance.run_keyword(keyword, *args)
         if output is not None:
-            return ("<", repr(output))
+            return [("<", repr(output))]
         else:
-            return ("", "")
+            return []
 
 
 def run_debug_if(condition, *args):

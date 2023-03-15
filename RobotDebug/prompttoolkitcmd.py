@@ -156,6 +156,21 @@ def _(event):
         b.insert_text("    ")
 
 
+@kb.add("enter")
+def _(event):
+    """
+    Closes auto completion.
+    """
+    b: Buffer = event.app.current_buffer
+    if b.complete_state:
+        completion = b.complete_state.current_completion
+        if completion:
+            b.apply_completion(completion)
+        else:
+            b.cancel_completion()
+    else:
+        b.validate_and_handle()
+
 class BaseCmd(cmd.Cmd):
     """Basic REPL tool."""
 

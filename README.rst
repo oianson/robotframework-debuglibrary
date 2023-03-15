@@ -10,7 +10,7 @@ Introduction
 This Library is a Fork by René Rohner from the original robotframework-debuglibrary by Xie Yanbo
 
 
-Robotframework-DebugLibrary is a debug library for `RobotFramework`_,
+Robotframework-RobotDebug is a debug library for `RobotFramework`_,
 which can be used as an interactive shell(REPL) also.
 
 .. _`RobotFramework`: http://robotframework.org/
@@ -53,23 +53,16 @@ Installation
 
 To install using ``pip``::
 
-    pip install robotframework-debuglibrary
-
-NOTICE: 2.0 is not compatible with python 2
-*******************************************
-
-``DebugLibrary`` >= 2.0.0 supports Python versions 3.x only.
-
-    pip install 'robotframework-debug'
+    pip install robotframework-debug
 
 Usage
 -----
 
-You can use this as a library, import ``DebugLibrary`` and call ``Debug``
+You can use this as a library, import ``RobotDebug`` and call ``Debug``
 or ``Debug If`` keywords in your test files like this::
 
     *** Settings ***
-    Library         DebugLibrary
+    Library         RobotDebug
 
     ** test case **
     SOME TEST
@@ -151,7 +144,7 @@ disabled all logs with ``-l None -x None -o None -L None -r None``.
 Step debugging
 **************
 
-``DebugLibrary`` support step debugging since version ``2.1.0``.
+``RobotDebug`` support step debugging since version ``2.1.0``.
 You can use ``step``/``s``, ``next``/``n``, ``continue``/``c``,
 ``list``/``l`` and ``longlist``/``ll`` to trace and view the code
 step by step like in ``pdb``::
@@ -166,7 +159,7 @@ step by step like in ``pdb``::
     -> log to console  hello
     => BuiltIn.Log To Console  hello
     > l
-      2   	Library  DebugLibrary
+      2   	Library  RobotDebug
       3
       4   	** test case **
       5   	test
@@ -188,7 +181,7 @@ Submitting issues
 -----------------
 
 Bugs and enhancements are tracked in the `issue tracker
-<https://github.com/xyb/robotframework-debuglibrary/issues>`_.
+<https://github.com/imbus/robotframework-debug/issues>`_.
 
 Before submitting a new issue, it is always a good idea to check is the
 same bug or enhancement already reported. If it is, please add your comments
@@ -197,9 +190,9 @@ to the existing issue instead of creating a new one.
 Development
 -----------
 
-If you want to develop and run DebugLibrary locally, you can use ::
+If you want to develop and run RobotDebug locally, you can use ::
 
-    $ python DebugLibrary/shell.py tests/step.robot
+    $ python RobotDebug/shell.py tests/step.robot
 
 `shell.py` is calling `robot` through a child process, so it will interrupt
 python debugging capabilities. If you want to debug in tools like vscode,

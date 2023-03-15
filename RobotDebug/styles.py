@@ -1,6 +1,7 @@
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import FormattedText
-from prompt_toolkit.styles import Style
+from prompt_toolkit.styles import Style, style_from_pygments_cls
+from pygments.styles import get_style_by_name
 
 NORMAL_STYLE = Style.from_dict(
     {
@@ -16,11 +17,12 @@ ERROR_STYLE = Style.from_dict(
     }
 )
 
-DEBUG_PROMPT_STYLE = Style.from_dict(
-    {
-        "prompt": "blue",
-    }
-)
+DEBUG_PROMPT_STYLE = style_from_pygments_cls(get_style_by_name('github-dark'))
+#     Style.from_dict(
+#     {
+#         "prompt": "blue",
+#     }
+# )
 
 
 def print_output(head, message, style=NORMAL_STYLE):

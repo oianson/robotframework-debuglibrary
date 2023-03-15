@@ -21,7 +21,7 @@ def run_robot_command(robot_instance, command):
     if not command:
         return
 
-    result = ""
+    result = []
     try:
         result = run_keyword(robot_instance, command)
     except HandlerExecutionFailed as exc:
@@ -35,8 +35,8 @@ def run_robot_command(robot_instance, command):
         print_error("! FAILED:", repr(exc))
 
     if result:
-        head, message = result
-        print_output(head, message)
+        for head, message in result:
+            print_output(head, message)
 
 
 class DebugCmd(PromptToolkitCmd):

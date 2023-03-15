@@ -62,11 +62,6 @@ class CmdCompleter(Completer):
     def get_completions(self, document, complete_event):
         """Compute suggestions."""
         text = document.text_before_cursor.lower()
-        parts = parse_keyword(text)
-        if len(parts) >= 2:
-            for index, part in enumerate(parts):
-                if part.strip() and not re.fullmatch(r"[$@&]{.+}", part.strip()):
-                    if index >= len(parts) - 1:
-                        yield from self._get_command_completions(part.strip())
-        else:
+        variables, keyword, args = parse_keyword(text.strip())
+        if keyword and not args:
             yield from self._get_command_completions(text)
