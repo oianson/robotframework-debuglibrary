@@ -69,25 +69,6 @@ def find_keyword(keyword_name):
     ]
 
 
-def _execute_variable(robot_instance: BuiltIn, variables, keyword, args) -> List[Tuple[str, str]]:
-    if not keyword:
-        logs = []
-        for variable in variables:
-            value = robot_instance.get_variable_value(variable)
-            logs.append(("#", f"{variable} = {value!r}"))
-        return logs
-    else:
-        return_values = robot_instance.run_keyword(keyword, *args)
-        if len(variables) == 1:
-            robot_instance.set_local_variable(variables[0], return_values)
-            return [("#", f"{variables[0]} = {return_values!r}")]
-        logs = []
-        for variable, value in zip(variables, return_values):
-            robot_instance.set_local_variable(variable, value)
-            logs.append(("#", f"{variable} = {value!r}"))
-        return logs
-
-
 def run_command(builtin, command: str) -> List[Tuple[str, str]]:
     """Run a command in robotframewrk environment."""
     if not command:
