@@ -7,3 +7,6 @@ include *.yml
 include .coveragerc
 recursive-include tests *.py
 recursive-include tests *.robot
+
+# added by check-manifest
+include *.sh

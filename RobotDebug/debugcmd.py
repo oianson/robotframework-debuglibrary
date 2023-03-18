@@ -7,7 +7,7 @@ from .cmdcompleter import CmdCompleter
 from .globals import context
 from .prompttoolkitcmd import PromptToolkitCmd
 from .robotapp import get_robot_instance, reset_robotframework_exception
-from .robotkeyword import find_keyword, get_keywords, get_lib_keywords, run_keyword
+from .robotkeyword import find_keyword, get_keywords, get_lib_keywords, run_command
 from .robotlib import get_builtin_libs, get_libs, get_libs_dict, match_libs
 from .sourcelines import RobotNeedUpgrade, print_source_lines, print_test_case_lines
 from .steplistener import is_step_mode, set_step_mode
@@ -23,16 +23,16 @@ def run_robot_command(robot_instance, command):
 
     result = []
     try:
-        result = run_keyword(robot_instance, command)
+        result = run_command(robot_instance, command)
     except HandlerExecutionFailed as exc:
-        print_error("! keyword:", command)
-        print_error("! handler execution failed:", exc.message)
+        print_error("! Expression:", command if "\n" not in command else f"\n{command}")
+        print_error("! Handler execution error:", exc.message)
     except ExecutionFailed as exc:
-        print_error("! keyword:", command)
-        print_error("! execution failed:", str(exc))
+        print_error("! Expression:", command if "\n" not in command else f"\n{command}")
+        print_error("! Execution error:", str(exc))
     except Exception as exc:
-        print_error("! keyword:", command)
-        print_error("! FAILED:", repr(exc))
+        print_error("! Expression:", command)
+        print_error("! Error:", repr(exc))
 
     if result:
         for head, message in result:

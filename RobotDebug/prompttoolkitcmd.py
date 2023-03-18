@@ -171,6 +171,18 @@ def _(event):
     else:
         b.validate_and_handle()
 
+
+# shift + enter
+@kb.add("s-down")
+@kb.add("c-down")
+def _(event):
+    """
+    Closes auto completion.
+    """
+    b: Buffer = event.app.current_buffer
+    b.newline()
+
+
 class BaseCmd(cmd.Cmd):
     """Basic REPL tool."""
 

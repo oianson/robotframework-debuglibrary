@@ -2,6 +2,9 @@ import re
 from typing import Tuple, List
 
 from robot.libraries.BuiltIn import BuiltIn
+from robot.parsing import get_model
+from robot.running import TestSuite
+from robot.running.model import If, For, While, Keyword
 from robot.variables.search import is_variable
 
 from .robotlib import ImportedLibraryDocBuilder, get_libs
@@ -85,26 +88,44 @@ def _execute_variable(robot_instance: BuiltIn, variables, keyword, args) -> List
         return logs
 
 
-def run_keyword(robot_instance, keyword) -> List[Tuple[str, str]]:
-    """Run a keyword in robotframewrk environment."""
-    if not keyword:
+def run_command(builtin, command: str) -> List[Tuple[str, str]]:
+    """Run a command in robotframewrk environment."""
+    if not command:
         return []
-
-    variables, keyword, args = parse_keyword(keyword)
-
-    is_comment = keyword.strip().startswith("#")
-    if is_comment:
-        return []
-
-    if variables:
-        return _execute_variable(robot_instance, variables, keyword, args)
+    # if is_variable(command):
+    #     return [("#", f"{command} = {builtin.get_variable_value(command)!r}")]
+    ctx = BuiltIn()._get_context()
+    if "\n" in command:
+        command = "\n  ".join(command.split("\n"))
+    suite_str = f"""
+*** Test Cases ***
+Fake Test
+  {command}
+"""
+    model = get_model(suite_str)
+    suite: TestSuite = TestSuite.from_model(model)
+    kw = suite.tests[0].body[0]
+    return_val = kw.run(ctx)
+    assign = set(_get_assignments(kw))
+    if not assign and return_val is not None:
+        return [("<", repr(return_val))]
+    elif assign:
+        output = [("<", repr(return_val))] if return_val is not None else []
+        for variable in assign:
+            variable = variable.rstrip("=").strip()
+            val = BuiltIn().get_variable_value(variable)
+            output.append(("#", f"{variable} = {val!r}"))
+        return output
     else:
-        output = robot_instance.run_keyword(keyword, *args)
-        if output is not None:
-            return [("<", repr(output))]
-        else:
-            return []
+        return []
 
+
+def _get_assignments(body_elem):
+    if hasattr(body_elem, "assign"):
+        yield from body_elem.assign
+    else:
+        for child in body_elem.body:
+            yield from _get_assignments(child)
 
 def run_debug_if(condition, *args):
     """Runs DEBUG if condition is true."""
