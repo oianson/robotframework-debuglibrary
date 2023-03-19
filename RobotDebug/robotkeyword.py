@@ -85,9 +85,14 @@ Fake Test
 """
     model = get_model(suite_str)
     suite: TestSuite = TestSuite.from_model(model)
-    kw = suite.tests[0].body[0]
-    return_val = kw.run(ctx)
-    assign = set(_get_assignments(kw))
+    if len(suite.tests[0].body) > 1:
+        for kw in suite.tests[0].body:
+            kw.run(ctx)
+        return_val = None
+    else:
+        kw = suite.tests[0].body[0]
+        return_val = kw.run(ctx)
+    assign = set(_get_assignments(suite.tests[0]))
     if not assign and return_val is not None:
         return [("<", repr(return_val))]
     elif assign:

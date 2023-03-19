@@ -169,7 +169,12 @@ def _(event):
         else:
             b.cancel_completion()
     else:
-        b.validate_and_handle()
+        if re.fullmatch(r"(FOR|IF|WHILE|TRY).*", b.text):
+            b.newline(False)
+        elif re.search(r"\n", b.text) and not re.fullmatch(r".*\n", b.text, re.DOTALL):
+            b.newline(False)
+        else:
+            b.validate_and_handle()
 
 
 # shift + enter
