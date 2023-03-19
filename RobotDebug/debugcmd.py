@@ -11,7 +11,12 @@ from .robotkeyword import find_keyword, get_keywords, get_lib_keywords, run_comm
 from .robotlib import get_builtin_libs, get_libs, get_libs_dict, match_libs
 from .sourcelines import RobotNeedUpgrade, print_source_lines, print_test_case_lines
 from .steplistener import is_step_mode, set_step_mode
-from .styles import DEBUG_PROMPT_STYLE, get_debug_prompt_tokens, print_error, print_output
+from .styles import (
+    DEBUG_PROMPT_STYLE,
+    get_debug_prompt_tokens,
+    print_error,
+    print_output,
+)
 
 HISTORY_PATH = os.environ.get("RFDEBUG_HISTORY", "~/.rfdebug_history")
 

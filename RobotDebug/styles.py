@@ -17,7 +17,7 @@ ERROR_STYLE = Style.from_dict(
     }
 )
 
-DEBUG_PROMPT_STYLE = style_from_pygments_cls(get_style_by_name('github-dark'))
+DEBUG_PROMPT_STYLE = style_from_pygments_cls(get_style_by_name("github-dark"))
 #     Style.from_dict(
 #     {
 #         "prompt": "blue",

@@ -42,10 +42,13 @@ class CmdCompleter(Completer):
             yield from self._get_argument_completions(completer, document)
 
     def _get_command_completions(self, text):
+        prefix_len = len(text) - len(text.lstrip())
+        content = text.strip()
+        suffix_len = len(text) - len(text.rstrip())
         return (
             Completion(
-                name,
-                -len(text),
+                f"{name}{' ' * suffix_len}",
+                -len(text.lstrip()),
                 display=self.displays.get(name, ""),
                 display_meta=self.display_metas.get(name, ""),
             )
@@ -55,13 +58,67 @@ class CmdCompleter(Completer):
                     ("." not in name and "." not in text)  # root level
                     or ("." in name and "." in text)
                 )  # library level
-                and name.lower().strip().startswith(text.strip())
+                and name.lower().strip().startswith(content)
             )
+        )
+
+    def _get_resource_completions(self, text):
+        return (
+            Completion(
+                name,
+                -len(text.lstrip()),
+                display=name,
+                display_meta="",
+            )
+            for name in [
+                "*** Settings ***",
+                "*** Variables ***",
+                "*** Keywords ***",
+            ]
+            if (name.lower().strip().startswith(text.strip()))
         )
 
     def get_completions(self, document, complete_event):
         """Compute suggestions."""
-        text = document.text_before_cursor.lower()
+        text = document.current_line_before_cursor
         variables, keyword, args = parse_keyword(text.strip())
-        if keyword and not args:
-            yield from self._get_command_completions(text)
+        if "FOR".startswith(text):
+            yield from [
+                Completion(
+                    "FOR    ${var}    IN    @{list}\n    Log    ${var}\nEND",
+                    -len(text),
+                    display="FOR IN",
+                    display_meta="For-Loop over all items in a list",
+                ),
+                Completion(
+                    "FOR    ${var}    IN RANGE    5\n    Log    ${var}\nEND",
+                    -len(text),
+                    display="FOR IN RANGE",
+                    display_meta="For-Loop over a range of numbers",
+                ),
+                Completion(
+                    "FOR    ${index}    ${var}    IN ENUMERATE    @{list}\n    Log    ${index} - ${var}n\nEND",
+                    -len(text),
+                    display="FOR IN ENUMERATE",
+                    display_meta="For-Loop over all items in a list with index",
+                ),
+            ]
+        elif "IF".startswith(text):
+            yield from [
+                Completion(
+                    "IF    <py-eval>    Log    None",
+                    -len(text),
+                    display="IF (one line)",
+                    display_meta="If-Statement as one line",
+                ),
+                Completion(
+                    "IF    <py-eval>\n    Log    if-branche\nEND",
+                    -len(text),
+                    display="IF (multi line)",
+                    display_meta="If-Statement as multi line",
+                ),
+            ]
+        elif text.startswith("*"):
+            yield from self._get_resource_completions(text.lower())
+        elif keyword and not args:
+            yield from self._get_command_completions(text.lower())

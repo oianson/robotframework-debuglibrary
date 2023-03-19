@@ -59,7 +59,6 @@ class TestCaseTable(_Table):
         return index > 0 and _Table._continues(self, value, index)
 
     def _tokenize(self, value, index):
-
         if index == 0 and self._is_empty(value):
             return [(value, SYNTAX)]
         return _Table._tokenize(self, value, index)
@@ -169,7 +168,7 @@ def _(event):
         else:
             b.cancel_completion()
     else:
-        if re.fullmatch(r"(FOR|IF|WHILE|TRY|\*\*\*).*", b.text):
+        if re.fullmatch(r"(FOR|IF|WHILE|TRY|\*\*).*", b.text):
             b.newline(False)
         elif re.search(r"\n", b.text) and not re.fullmatch(r".*\n", b.text, re.DOTALL):
             b.newline(False)
@@ -181,9 +180,6 @@ def _(event):
 @kb.add("s-down")
 @kb.add("c-down")
 def _(event):
-    """
-    Closes auto completion.
-    """
     b: Buffer = event.app.current_buffer
     b.newline()
 

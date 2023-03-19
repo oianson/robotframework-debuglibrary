@@ -120,7 +120,9 @@ Fake Test
 
 
 def _import_resource_from_string(command):
-    with tempfile.NamedTemporaryFile(mode='w', prefix="keywords", suffix=".resource", encoding="utf-8") as res_file:
+    with tempfile.NamedTemporaryFile(
+        mode="w", prefix="keywords", suffix=".resource", encoding="utf-8"
+    ) as res_file:
         res_file.write(command)
         res_file.seek(0)
         global temp_resources
@@ -135,6 +137,7 @@ def _get_assignments(body_elem):
     else:
         for child in body_elem.body:
             yield from _get_assignments(child)
+
 
 def run_debug_if(condition, *args):
     """Runs DEBUG if condition is true."""

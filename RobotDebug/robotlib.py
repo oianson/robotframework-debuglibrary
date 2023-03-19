@@ -11,12 +11,13 @@ def get_builtin_libs():
 
 def get_libs():
     """Get imported robotframework library names."""
-    return sorted(IMPORTER._library_cache._items, key=lambda _: _.name)
+    libs = [lib for lib in IMPORTER._library_cache._items if lib.name != "Reserved"]
+    return sorted(libs, key=lambda _: _.name)
 
 
 def get_libs_dict():
     """Get imported robotframework libraries as a name -> lib dict"""
-    return {lib.name: lib for lib in IMPORTER._library_cache._items}
+    return {lib.name: lib for lib in IMPORTER._library_cache._items if lib.name != "Reserved"}
 
 
 def match_libs(name=""):

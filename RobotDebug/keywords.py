@@ -29,7 +29,6 @@ class DebugKeywords(RobotLibraryStepListenerMixin):
         old_stdout = sys.stdout
         sys.stdout = sys.__stdout__
         try:
-
             show_intro = not is_step_mode()
             if show_intro:
                 print_output("\n>>>>>", "Enter interactive shell")
