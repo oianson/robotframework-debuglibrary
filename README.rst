@@ -13,39 +13,7 @@ This Library is a Fork by René Rohner from the original robotframework-debuglib
 Robotframework-RobotDebug is a debug library for `RobotFramework`_,
 which can be used as an interactive shell(REPL) also.
 
-.. _`RobotFramework`: http://robotframework.org/
-
-.. image:: https://api.codeclimate.com/v1/badges/5201026ff11b63530cf5/maintainability
-   :target: https://codeclimate.com/github/xyb/robotframework-debuglibrary/maintainability
-   :alt: Maintainability
-
-.. image:: https://api.codeclimate.com/v1/badges/5201026ff11b63530cf5/test_coverage
-   :target: https://codeclimate.com/github/xyb/robotframework-debuglibrary/test_coverage
-   :alt: Test Coverage
-
-.. image:: https://github.com/xyb/robotframework-debuglibrary/workflows/test/badge.svg?branch=master
-   :target: https://github.com/xyb/robotframework-debuglibrary
-   :alt: test
-
-.. image:: https://img.shields.io/pypi/v/robotframework-debuglibrary.svg
-   :target: https://pypi.org/project/robotframework-debuglibrary/
-   :alt: Latest version
-
-.. image:: https://img.shields.io/badge/robotframework-3%20%7C%204%20%7C%205-blue
-   :target: https://github.com/xyb/robotframework-debuglibrary
-   :alt: Support robotframework versions
-
-.. image:: https://img.shields.io/pypi/pyversions/robotframework-debuglibrary
-   :target: https://github.com/xyb/robotframework-debuglibrary
-   :alt: Support python versions
-
-.. image:: https://img.shields.io/pypi/dm/robotframework-debuglibrary
-   :target: https://pypi.org/project/robotframework-debuglibrary/
-   :alt: PyPI Downloads
-
-.. image:: https://img.shields.io/pypi/l/robotframework-debuglibrary.svg
-   :target: https://github.com/xyb/robotframework-debuglibrary/blob/master/LICENSE
-   :alt: License
+.. _`RobotFramework`: http://robotframework.org
 
 
 Installation
@@ -58,8 +26,7 @@ To install using ``pip``::
 Usage
 -----
 
-You can use this as a library, import ``RobotDebug`` and call ``Debug``
-or ``Debug If`` keywords in your test files like this::
+You can use this as a library, import ``RobotDebug`` and call ``Debug`` keyword in your test files like this::
 
     *** Settings ***
     Library         RobotDebug
@@ -70,11 +37,11 @@ or ``Debug If`` keywords in your test files like this::
         Debug
         # some else...
         ${count} =  Get Element Count  name:div_name
-        Debug If  ${count} < 1
+
 
 Or you can run it standalone as a ``RobotFramework`` shell::
 
-    $ rfdebug
+    $ irobot
     [...snap...]
     >>>>> Enter interactive shell
     > help
@@ -113,32 +80,21 @@ Or you can run it standalone as a ``RobotFramework`` shell::
     [u'hello', u'world']
     > ${dict.name}
     admin
-    > # start a selenium server quickly
-    > help selenium
-    Start a selenium webdriver and open url in browser you expect.
-
-            s(elenium)  [<url>]  [<browser>]
-
-            default url is google.com, default browser is firefox.
-    > selenium  google.com  chrome
-    # import library  SeleniumLibrary
-    # open browser  http://google.com  chrome
-    < 1
-    > close all browsers
-    > Ctrl-D
+    > exit
     >>>>> Exit shell.
 
 The interactive shell support auto-completion for robotframework keywords and
-commands. Try input ``BuiltIn.`` then type ``<TAB>`` key to feeling it.
+commands. Try input ``BuiltIn.`` then hit ``Control + Space`` key to feeling it.
+
 The history will save at ``~/.rfdebug_history`` default or any file
 defined in environment variable ``RFDEBUG_HISTORY``.
 
-In case you don't remember the name of keyword during using ``rfdebug``,
+In case you don't remember the name of keyword during using ``irobot``,
 there are commands ``libs`` or ``ls`` to list the imported libraries and
 built-in libraries, and ``keywords <lib name>`` or ``k`` to list
 keywords of a library.
 
-``rfdebug`` accept any ``pybot`` arguments, but by default, ``rfdebug``
+``irobot`` accept any ``robot`` arguments, but by default, ``rfdebug``
 disabled all logs with ``-l None -x None -o None -L None -r None``.
 
 Step debugging
