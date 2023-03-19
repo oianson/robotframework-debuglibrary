@@ -25,8 +25,8 @@ def run_robot_command(robot_instance, command):
     try:
         result = run_command(robot_instance, command)
     except HandlerExecutionFailed as exc:
-        print_error("! Expression:", command if "\n" not in command else f"\n{command}")
-        print_error("! Handler execution error:", exc.message)
+        # print_error("! Expression:", command if "\n" not in command else f"\n{command}")
+        print_error("! FAIL:", exc.message)
     except ExecutionFailed as exc:
         print_error("! Expression:", command if "\n" not in command else f"\n{command}")
         print_error("! Execution error:", str(exc))

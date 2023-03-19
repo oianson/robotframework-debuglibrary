@@ -1,10 +1,13 @@
 import re
+import tempfile
+from pathlib import Path
 from typing import Tuple, List
 
 from robot.libraries.BuiltIn import BuiltIn
-from robot.parsing import get_model
-from robot.running import TestSuite
-from robot.running.model import If, For, While, Keyword
+from robot.parsing import get_model, get_resource_model
+from robot.running import TestSuite, ResourceFileBuilder
+from robot.running.model import If, For, While, Keyword, ResourceFile
+from robot.running.builder.transformers import ResourceBuilder
 from robot.variables.search import is_variable
 
 from .robotlib import ImportedLibraryDocBuilder, get_libs
@@ -13,6 +16,7 @@ from .robotvar import assign_variable
 KEYWORD_SEP = re.compile("  +|\t")
 
 _lib_keywords_cache = {}
+temp_resources = []
 
 
 def parse_keyword(command) -> Tuple[List[str], str, List[str]]:
@@ -73,26 +77,22 @@ def run_command(builtin, command: str) -> List[Tuple[str, str]]:
     """Run a command in robotframewrk environment."""
     if not command:
         return []
-    # if is_variable(command):
-    #     return [("#", f"{command} = {builtin.get_variable_value(command)!r}")]
+    if is_variable(command):
+        return [("#", f"{command} = {builtin.get_variable_value(command)!r}")]
     ctx = BuiltIn()._get_context()
-    if "\n" in command:
-        command = "\n  ".join(command.split("\n"))
-    suite_str = f"""
-*** Test Cases ***
-Fake Test
-  {command}
-"""
-    model = get_model(suite_str)
-    suite: TestSuite = TestSuite.from_model(model)
-    if len(suite.tests[0].body) > 1:
-        for kw in suite.tests[0].body:
+    if command.startswith("***"):
+        _import_resource_from_string(command)
+        return []
+
+    test = get_test_body_from_string(command)
+    if len(test.body) > 1:
+        for kw in test.body:
             kw.run(ctx)
         return_val = None
     else:
-        kw = suite.tests[0].body[0]
+        kw = test.body[0]
         return_val = kw.run(ctx)
-    assign = set(_get_assignments(suite.tests[0]))
+    assign = set(_get_assignments(test))
     if not assign and return_val is not None:
         return [("<", repr(return_val))]
     elif assign:
@@ -104,6 +104,29 @@ Fake Test
         return output
     else:
         return []
+
+
+def get_test_body_from_string(command):
+    if "\n" in command:
+        command = "\n  ".join(command.split("\n"))
+    suite_str = f"""
+*** Test Cases ***
+Fake Test
+  {command}
+"""
+    model = get_model(suite_str)
+    suite: TestSuite = TestSuite.from_model(model)
+    return suite.tests[0]
+
+
+def _import_resource_from_string(command):
+    with tempfile.NamedTemporaryFile(mode='w', prefix="keywords", suffix=".resource", encoding="utf-8") as res_file:
+        res_file.write(command)
+        res_file.seek(0)
+        global temp_resources
+        temp_resources.insert(0, str(Path(res_file.name).stem))
+        BuiltIn().import_resource(str(Path(res_file.name).resolve()))
+        BuiltIn().set_library_search_order(*temp_resources)
 
 
 def _get_assignments(body_elem):

@@ -169,7 +169,7 @@ def _(event):
         else:
             b.cancel_completion()
     else:
-        if re.fullmatch(r"(FOR|IF|WHILE|TRY).*", b.text):
+        if re.fullmatch(r"(FOR|IF|WHILE|TRY|\*\*\*).*", b.text):
             b.newline(False)
         elif re.search(r"\n", b.text) and not re.fullmatch(r".*\n", b.text, re.DOTALL):
             b.newline(False)
@@ -297,7 +297,12 @@ class PromptToolkitCmd(BaseCmd):
     get_prompt_tokens = None
     prompt_style = None
     intro = """\
-Only accepted plain text format keyword separated with two or more spaces.
+iRobot can interpret single or multiple keyword calls,
+as well as FOR, IF, WHILE, TRY
+and resource file syntax like *** Keywords*** or *** Variables ***.
+
+Press Shift+ArrowDown to insert a new line.
+
 Type "help" for more information.\
 """
 

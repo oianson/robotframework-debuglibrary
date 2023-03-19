@@ -8,7 +8,7 @@ TEST_SUITE = b"""*** Settings ***
 Library  RobotDebug
 
 ** test case **
-RFDEBUG REPL
+Robot Framework Debug REPL
     debug
 """
 
