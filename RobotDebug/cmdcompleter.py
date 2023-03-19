@@ -3,6 +3,7 @@ import re
 from prompt_toolkit.completion import Completer, Completion
 
 from .robotkeyword import parse_keyword
+from .styles import _get_style_completions
 
 
 class CmdCompleter(Completer):
@@ -118,6 +119,8 @@ class CmdCompleter(Completer):
                     display_meta="If-Statement as multi line",
                 ),
             ]
+        elif re.fullmatch(r"style {2,}.*", text):
+            yield from _get_style_completions(text.lower())
         elif text.startswith("*"):
             yield from self._get_resource_completions(text.lower())
         elif keyword and not args:

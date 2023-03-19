@@ -1,3 +1,4 @@
+import difflib
 import os
 
 from robot.api import logger
@@ -13,9 +14,13 @@ from .sourcelines import RobotNeedUpgrade, print_source_lines, print_test_case_l
 from .steplistener import is_step_mode, set_step_mode
 from .styles import (
     DEBUG_PROMPT_STYLE,
+    _get_print_style,
     get_debug_prompt_tokens,
+    get_pygments_styles,
+    get_style_by_name,
     print_error,
     print_output,
+    style_from_pygments_cls,
 )
 
 HISTORY_PATH = os.environ.get("RFDEBUG_HISTORY", "~/.rfdebug_history")
@@ -275,3 +280,14 @@ Access https://github.com/imbus/robotframework-debug for more details.\
         stop = super(DebugCmd, self).onecmd(line)
         context.last_command = self.lastcmd
         return stop
+
+    def do_style(self, args):
+        """Set style of output. Usage `style    <style_name>`. Call just `style` to list all styles."""
+        styles = get_pygments_styles()
+        if not args.strip():
+            for style in styles:
+                print_output(f"> {style}    ", style, _get_print_style(style))
+            return
+        style = difflib.get_close_matches(args.strip(), styles)[0]
+        self.prompt_style = style_from_pygments_cls(get_style_by_name(style))
+        print_output("Set style to:   ", style, _get_print_style(str(style)))

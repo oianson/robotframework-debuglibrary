@@ -1,13 +1,13 @@
 import re
 import tempfile
 from pathlib import Path
-from typing import Tuple, List
+from typing import List, Tuple
 
 from robot.libraries.BuiltIn import BuiltIn
 from robot.parsing import get_model, get_resource_model
-from robot.running import TestSuite, ResourceFileBuilder
-from robot.running.model import If, For, While, Keyword, ResourceFile
+from robot.running import ResourceFileBuilder, TestSuite
 from robot.running.builder.transformers import ResourceBuilder
+from robot.running.model import For, If, Keyword, ResourceFile, While
 from robot.variables.search import is_variable
 
 from .robotlib import ImportedLibraryDocBuilder, get_libs
