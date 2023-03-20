@@ -1,7 +1,7 @@
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.formatted_text import FormattedText
-from prompt_toolkit.styles import Style, style_from_pygments_cls
+from prompt_toolkit.styles import Style, style_from_pygments_cls, merge_styles
 from pygments.styles import get_all_styles, get_style_by_name
 
 NORMAL_STYLE = Style.from_dict(
@@ -17,7 +17,12 @@ ERROR_STYLE = Style.from_dict(
     }
 )
 
-DEBUG_PROMPT_STYLE = style_from_pygments_cls(get_style_by_name("solarized-dark"))
+DEBUG_PROMPT_STYLE = merge_styles([Style.from_dict(
+    {
+        "pygments.name.function": "bold",
+        "pygments.literal.string": "italic",
+    }
+), style_from_pygments_cls(get_style_by_name("solarized-dark"))])
 
 
 def get_pygments_styles():

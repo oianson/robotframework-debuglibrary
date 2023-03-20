@@ -7,6 +7,7 @@ from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.lexers import PygmentsLexer
+from prompt_toolkit.output import ColorDepth
 from prompt_toolkit.shortcuts import CompleteStyle, prompt
 from pygments.lexer import Lexer
 from pygments.lexers.robotframework import (
@@ -315,6 +316,7 @@ Type "help" for more information.\
             prompt_str = self.prompt
         try:
             line = prompt(
+                color_depth=ColorDepth.DEPTH_24_BIT,
                 message=prompt_str,
                 history=self.history,
                 auto_suggest=AutoSuggestFromHistory(),

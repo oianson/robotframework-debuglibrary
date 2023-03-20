@@ -93,7 +93,7 @@ def run_command(builtin, command: str) -> List[Tuple[str, str]]:
     if not assign and return_val is not None:
         return [("<", repr(return_val))]
     elif assign:
-        output = [("<", repr(return_val))] if return_val is not None else []
+        output = []  # [("<", repr(return_val))] if return_val is not None else []
         for variable in assign:
             variable = variable.rstrip("=").strip()
             val = BuiltIn().get_variable_value(variable)
