@@ -4,6 +4,7 @@ import re
 
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.cursor_shapes import CursorShape
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.lexers import PygmentsLexer
@@ -21,6 +22,8 @@ from pygments.lexers.robotframework import (
     VariableTokenizer,
     _Table,
 )
+
+from .robotkeyword import get_rprompt_text
 
 
 class KeywordCall(Tokenizer):
@@ -307,6 +310,9 @@ Type "help" for more information.\
         BaseCmd.__init__(self, completekey, stdin, stdout)
         self.history = FileHistory(os.path.expanduser(history_path))
 
+    def prompt_continuation(self, width, line_number, is_soft_wrap):
+        return " " * width
+
     def get_input(self):
         kwargs = {}
         if self.get_prompt_tokens:
@@ -325,6 +331,10 @@ Type "help" for more information.\
                 complete_style=CompleteStyle.COLUMN,
                 key_bindings=kb,
                 lexer=PygmentsLexer(RobotFrameworkLexer),
+                rprompt=get_rprompt_text(),
+                prompt_continuation=self.prompt_continuation,
+                mouse_support=True,
+                cursor=CursorShape.BLINKING_BEAM,
                 **kwargs
             )
         except EOFError:

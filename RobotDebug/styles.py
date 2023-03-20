@@ -1,7 +1,7 @@
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.formatted_text import FormattedText
-from prompt_toolkit.styles import Style, style_from_pygments_cls, merge_styles
+from prompt_toolkit.styles import Style, merge_styles, style_from_pygments_cls
 from pygments.styles import get_all_styles, get_style_by_name
 
 NORMAL_STYLE = Style.from_dict(
@@ -11,18 +11,19 @@ NORMAL_STYLE = Style.from_dict(
     }
 )
 
-ERROR_STYLE = Style.from_dict(
-    {
-        "head": "fg:red"
-    }
-)
+ERROR_STYLE = Style.from_dict({"head": "fg:red"})
 
-DEBUG_PROMPT_STYLE = merge_styles([Style.from_dict(
-    {
-        "pygments.name.function": "bold",
-        "pygments.literal.string": "italic",
-    }
-), style_from_pygments_cls(get_style_by_name("solarized-dark"))])
+DEBUG_PROMPT_STYLE = merge_styles(
+    [
+        Style.from_dict(
+            {
+                "pygments.name.function": "bold",
+                "pygments.literal.string": "italic",
+            }
+        ),
+        style_from_pygments_cls(get_style_by_name("solarized-dark")),
+    ]
+)
 
 
 def get_pygments_styles():
@@ -70,6 +71,9 @@ def _get_style_completions(text):
             start,
             display=name,
             display_meta="",
+            style=dict(style_from_pygments_cls(get_style_by_name(name)).style_rules).get(
+                "pygments.name.function"
+            ),
         )
         for name in get_pygments_styles()
         if (name.lower().strip().startswith(style_part))

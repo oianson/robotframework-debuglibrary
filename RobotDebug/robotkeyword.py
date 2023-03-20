@@ -1,5 +1,6 @@
 import re
 import tempfile
+import time
 from pathlib import Path
 from typing import List, Tuple
 
@@ -14,6 +15,7 @@ KEYWORD_SEP = re.compile("  +|\t")
 
 _lib_keywords_cache = {}
 temp_resources = []
+last_keyword_exec_time = 0
 
 
 def parse_keyword(command) -> Tuple[List[str], str, List[str]]:
@@ -72,6 +74,8 @@ def find_keyword(keyword_name):
 
 def run_command(builtin, command: str) -> List[Tuple[str, str]]:
     """Run a command in robotframewrk environment."""
+    global last_keyword_exec_time
+    last_keyword_exec_time = 0
     if not command:
         return []
     if is_variable(command):
@@ -80,15 +84,18 @@ def run_command(builtin, command: str) -> List[Tuple[str, str]]:
     if command.startswith("***"):
         _import_resource_from_string(command)
         return []
-
     test = get_test_body_from_string(command)
     if len(test.body) > 1:
+        start = time.monotonic()
         for kw in test.body:
             kw.run(ctx)
+        last_keyword_exec_time = time.monotonic() - start
         return_val = None
     else:
         kw = test.body[0]
+        start = time.monotonic()
         return_val = kw.run(ctx)
+        last_keyword_exec_time = time.monotonic() - start
     assign = set(_get_assignments(test))
     if not assign and return_val is not None:
         return [("<", repr(return_val))]
@@ -101,6 +108,13 @@ def run_command(builtin, command: str) -> List[Tuple[str, str]]:
         return output
     else:
         return []
+
+
+def get_rprompt_text():
+    """Get text for bottom toolbar."""
+    if last_keyword_exec_time == 0:
+        return
+    return [("class:pygments.comment", f"# ΔT: {last_keyword_exec_time:.3f}s")]
 
 
 def get_test_body_from_string(command):
