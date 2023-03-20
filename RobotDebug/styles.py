@@ -13,8 +13,7 @@ NORMAL_STYLE = Style.from_dict(
 
 ERROR_STYLE = Style.from_dict(
     {
-        "head": "fg:red",
-        "message": "fg:white",
+        "head": "fg:red"
     }
 )
 

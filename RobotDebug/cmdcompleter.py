@@ -43,7 +43,6 @@ class CmdCompleter(Completer):
             yield from self._get_argument_completions(completer, document)
 
     def _get_command_completions(self, text):
-        prefix_len = len(text) - len(text.lstrip())
         content = text.strip()
         suffix_len = len(text) - len(text.rstrip())
         return (
@@ -98,7 +97,8 @@ class CmdCompleter(Completer):
                     display_meta="For-Loop over a range of numbers",
                 ),
                 Completion(
-                    "FOR    ${index}    ${var}    IN ENUMERATE    @{list}\n    Log    ${index} - ${var}n\nEND",
+                    "FOR    ${index}    ${var}    IN ENUMERATE"
+                    "    @{list}\n    Log    ${index} - ${var}n\nEND",
                     -len(text),
                     display="FOR IN ENUMERATE",
                     display_meta="For-Loop over all items in a list with index",

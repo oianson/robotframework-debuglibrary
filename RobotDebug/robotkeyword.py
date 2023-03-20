@@ -1,17 +1,14 @@
 import re
 import tempfile
-from pathlib import Path, WindowsPath
+from pathlib import Path
 from typing import List, Tuple
 
 from robot.libraries.BuiltIn import BuiltIn
-from robot.parsing import get_model, get_resource_model
-from robot.running import ResourceFileBuilder, TestSuite
-from robot.running.builder.transformers import ResourceBuilder
-from robot.running.model import For, If, Keyword, ResourceFile, While
+from robot.parsing import get_model
+from robot.running import TestSuite
 from robot.variables.search import is_variable
 
 from .robotlib import ImportedLibraryDocBuilder, get_libs
-from .robotvar import assign_variable
 
 KEYWORD_SEP = re.compile("  +|\t")
 
@@ -120,16 +117,19 @@ Fake Test
 
 
 def _import_resource_from_string(command):
-    with tempfile.NamedTemporaryFile(
-        mode="w", prefix="keywords", suffix=".resource", encoding="utf-8"
-    ) as res_file:
+    res_file = tempfile.NamedTemporaryFile(
+        mode="w", prefix="RobotDebug_keywords_", suffix=".resource", encoding="utf-8", delete=False
+    )
+    resource_path = Path(res_file.name)
+    try:
         res_file.write(command)
-        res_file.seek(0)
-        resource_path = Path(res_file.name)
+        res_file.close()
         global temp_resources
         temp_resources.insert(0, str(resource_path.stem))
         BuiltIn().import_resource(resource_path.resolve().as_posix())
         BuiltIn().set_library_search_order(*temp_resources)
+    finally:
+        resource_path.unlink(missing_ok=True)
 
 
 def _get_assignments(body_elem):
