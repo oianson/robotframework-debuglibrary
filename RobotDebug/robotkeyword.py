@@ -1,6 +1,6 @@
 import re
 import tempfile
-from pathlib import Path
+from pathlib import Path, WindowsPath
 from typing import List, Tuple
 
 from robot.libraries.BuiltIn import BuiltIn
@@ -125,9 +125,10 @@ def _import_resource_from_string(command):
     ) as res_file:
         res_file.write(command)
         res_file.seek(0)
+        resource_path = Path(res_file.name)
         global temp_resources
-        temp_resources.insert(0, str(Path(res_file.name).stem))
-        BuiltIn().import_resource(str(Path(res_file.name).resolve()))
+        temp_resources.insert(0, str(resource_path.stem))
+        BuiltIn().import_resource(resource_path.resolve().as_posix())
         BuiltIn().set_library_search_order(*temp_resources)
 
 
