@@ -41,7 +41,7 @@ setup(
     zip_safe=False,
     url="https://github.com/imbus/robotframework-debug/",
     keywords="robotframework,debug,shell,repl",
-    install_requires=["prompt-toolkit >= 3", "robotframework >= 5.0", "pygments"],
+    install_requires=["prompt-toolkit >= 3.0.38", "robotframework >= 5.0", "pygments >= 2.14.0"],
     python_requires=">=3.7.0",
     tests_require=["pexpect", "coverage", "docutils"],
     test_suite="tests.test_debuglibrary.suite",

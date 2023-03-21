@@ -335,6 +335,7 @@ Type "help" for more information.\
                 prompt_continuation=self.prompt_continuation,
                 mouse_support=True,
                 cursor=CursorShape.BLINKING_BEAM,
+                include_default_pygments_style=False,
                 **kwargs
             )
         except EOFError:
