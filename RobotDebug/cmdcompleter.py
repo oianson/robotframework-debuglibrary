@@ -43,12 +43,12 @@ class CmdCompleter(Completer):
             yield from self._get_argument_completions(completer, document)
 
     def _get_command_completions(self, text):
-        content = text.strip()
+        content = text.strip().split("  ")[-1].lower().strip()
         suffix_len = len(text) - len(text.rstrip())
         return (
             Completion(
                 f"{name}{' ' * suffix_len}",
-                -len(text.lstrip()),
+                -len(content),
                 display=self.displays.get(name, ""),
                 display_meta=self.display_metas.get(name, ""),
             )

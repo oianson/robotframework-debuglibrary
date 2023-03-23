@@ -2,9 +2,18 @@ import cmd
 import os
 import re
 
+from prompt_toolkit.application import get_app
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
 from prompt_toolkit.cursor_shapes import CursorShape
+from prompt_toolkit.filters import (
+    Condition,
+    has_completions,
+    has_selection,
+    in_paste_mode,
+    is_multiline,
+)
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.lexers import PygmentsLexer
@@ -133,14 +142,19 @@ def _(event):
         b.start_completion(select_first=False)
 
 
-@kb.add("escape")
+@kb.add("escape", filter=has_completions)
 def _(event):
     """
     Closes auto completion.
     """
     b: Buffer = event.app.current_buffer
-    if b.complete_state:
-        b.cancel_completion()
+    b.cancel_completion()
+
+
+@kb.add("escape", filter=~has_completions | ~has_selection)
+def _(event):
+    b: Buffer = event.app.current_buffer
+    b.reset()
 
 
 @kb.add("tab")
@@ -174,18 +188,79 @@ def _(event):
     else:
         if re.fullmatch(r"(FOR|IF|WHILE|TRY|\*\*).*", b.text):
             b.newline(False)
-        elif re.search(r"\n", b.text) and not re.fullmatch(r".*\n", b.text, re.DOTALL):
+        elif b.cursor_position == len(b.text) and re.fullmatch(r".*\n", b.text, re.DOTALL):
+            b.validate_and_handle()
+        elif re.search(r"\n", b.text):
             b.newline(False)
         else:
             b.validate_and_handle()
 
 
 # shift + enter
-@kb.add("s-down")
-@kb.add("c-down")
+@kb.add("s-down", filter=~is_multiline)
+@kb.add("c-down", filter=is_multiline)
 def _(event):
     b: Buffer = event.app.current_buffer
     b.newline()
+
+
+@kb.add("c-insert", filter=has_selection)
+@kb.add("c-c", filter=has_selection)
+def _(event):
+    b: Buffer = event.app.current_buffer
+    get_app().clipboard.set_data(b.copy_selection())
+
+
+@kb.add("c-x", filter=has_selection)
+def _(event):
+    b: Buffer = event.app.current_buffer
+    get_app().clipboard.set_data(b.cut_selection())
+
+
+@kb.add("c-insert")
+@kb.add("c-v")
+def _(event):
+    b: Buffer = event.app.current_buffer
+    data = get_app().clipboard.get_data()
+    b.paste_clipboard_data(data)
+
+
+@kb.add("c-z")
+def _(event):
+    b: Buffer = event.app.current_buffer
+    b.undo()
+
+
+@kb.add("c-y")
+def _(event):
+    b: Buffer = event.app.current_buffer
+    b.redo()
+
+
+@kb.add("c-a")
+def _(event):
+    b: Buffer = event.app.current_buffer
+    b.cursor_position = 0
+    b.start_selection()
+    b.cursor_position = len(b.text)
+
+
+@kb.add("c-e")
+def _(event):
+    b: Buffer = event.app.current_buffer
+    b.cursor_position = len(b.text)
+    b.start_selection()
+    b.cursor_position = 0
+
+
+@kb.add("left", filter=has_selection)
+@kb.add("right", filter=has_selection)
+@kb.add("up", filter=has_selection)
+@kb.add("down", filter=has_selection)
+@kb.add("escape", filter=has_selection)
+def _(event):
+    b: Buffer = event.app.current_buffer
+    b.exit_selection()
 
 
 class BaseCmd(cmd.Cmd):
@@ -322,20 +397,21 @@ Type "help" for more information.\
             prompt_str = self.prompt
         try:
             line = prompt(
-                color_depth=ColorDepth.DEPTH_24_BIT,
-                message=prompt_str,
-                history=self.history,
                 auto_suggest=AutoSuggestFromHistory(),
-                enable_history_search=True,
+                clipboard=PyperclipClipboard(),
+                color_depth=ColorDepth.DEPTH_24_BIT,
                 completer=self.get_completer(),
                 complete_style=CompleteStyle.COLUMN,
+                cursor=CursorShape.BLINKING_BEAM,
+                enable_history_search=True,
+                history=self.history,
+                include_default_pygments_style=False,
                 key_bindings=kb,
                 lexer=PygmentsLexer(RobotFrameworkLexer),
-                rprompt=get_rprompt_text(),
-                prompt_continuation=self.prompt_continuation,
+                message=prompt_str,
                 mouse_support=True,
-                cursor=CursorShape.BLINKING_BEAM,
-                include_default_pygments_style=False,
+                prompt_continuation=self.prompt_continuation,
+                rprompt=get_rprompt_text(),
                 **kwargs
             )
         except EOFError:
