@@ -23,7 +23,7 @@ from prompt_toolkit.shortcuts import CompleteStyle, prompt
 from pygments.lexer import Lexer
 from pygments.lexers.robotframework import RobotFrameworkLexer
 
-from .cmdcompleter import RobotFrameworkLocalLexer
+from .lexer import RobotFrameworkLocalLexer
 from .robotkeyword import get_rprompt_text
 
 kb = KeyBindings()
@@ -281,8 +281,6 @@ iRobot can interpret single or multiple keyword calls,
 as well as FOR, IF, WHILE, TRY
 and resource file syntax like *** Keywords*** or *** Variables ***.
 
-Press Shift+ArrowDown to insert a new line.
-
 Type "help" for more information.\
 """
 
@@ -294,7 +292,12 @@ Type "help" for more information.\
         return " " * width
 
     def bottom_toolbar(self):
-        return [("class:bottom-toolbar-key", "exit"), ("class:bottom-toolbar", " to close... ")]
+        return [
+            ("class:bottom-toolbar-key", "more features"),
+            ("class:bottom-toolbar", " coming soon...     "),
+            ("class:bottom-toolbar-key", "Shift+ArrowDown"),
+            ("class:bottom-toolbar", " to insert a new line."),
+        ]
 
     def get_input(self):
         kwargs = {}

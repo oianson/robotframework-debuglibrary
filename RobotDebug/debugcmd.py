@@ -2,6 +2,7 @@ import difflib
 import os
 from typing import List
 
+from prompt_toolkit.shortcuts import clear
 from prompt_toolkit.styles import merge_styles
 from robot.api import logger
 from robot.errors import ExecutionFailed, HandlerExecutionFailed
@@ -296,6 +297,12 @@ Access https://github.com/imbus/robotframework-debug for more details.\
             [BASE_STYLE, style_from_pygments_cls(get_style_by_name(style))]
         )
         print_output("Set style to:   ", style, _get_print_style(str(style)))
+
+    def do_clear(self, args):
+        """Clear screen."""
+        clear()
+
+    do_cls = do_clear
 
 
 def reset_robotframework_exception():
