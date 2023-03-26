@@ -12,8 +12,8 @@ from robot.running.signalhandler import STOP_SIGNAL_MONITOR
 from .cmdcompleter import CmdCompleter
 from .globals import context
 from .prompttoolkitcmd import PromptToolkitCmd
-from .robotkeyword import find_keyword, get_keywords, get_lib_keywords, run_command  #, get_res_keywords, get_resource_keywords
-from .robotlib import get_builtin_libs, get_libs, match_libs, get_resources  #, get_resources_dict, get_libs_dict
+from .robotkeyword import find_keyword, get_keywords, get_lib_keywords, run_command
+from .robotlib import get_builtin_libs, get_libs, match_libs
 from .sourcelines import RobotNeedUpgrade, print_source_lines, print_test_case_lines
 from .steplistener import is_step_mode, set_step_mode
 from .styles import (

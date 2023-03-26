@@ -2,7 +2,7 @@ import re
 import tempfile
 import time
 from pathlib import Path
-from typing import List, Tuple, Generator, Iterator
+from typing import List, Tuple, Iterator
 
 from robot.libdocpkg.model import LibraryDoc, KeywordDoc
 from robot.libraries.BuiltIn import BuiltIn
@@ -10,7 +10,7 @@ from robot.parsing import get_model
 from robot.running import TestSuite, UserLibrary
 from robot.variables.search import is_variable
 
-from .robotlib import ImportedLibraryDocBuilder, get_libs, get_resources, ImportedResourceDocBuilder
+from .robotlib import ImportedLibraryDocBuilder, get_libs, ImportedResourceDocBuilder
 
 KEYWORD_SEP = re.compile("  +|\t")
 
@@ -47,23 +47,10 @@ def get_lib_keywords(library) -> List[KeywordDoc]:
     return _lib_keywords_cache[library.name].keywords
 
 
-# def get_resource_keywords(resource) -> List[KeywordDoc]:
-#     """Get keywords of imported resource."""
-#     if resource.name not in _resource_keywords_cache:
-#         _resource_keywords_cache[resource.name]: LibraryDoc = ImportedResourceDocBuilder().build(resource)
-#     return _resource_keywords_cache[resource.name].keywords
-
-
 def get_keywords() -> Iterator[KeywordDoc]:
     """Get all keywords of libraries."""
     for lib in get_libs():
         yield from get_lib_keywords(lib)
-
-
-# def get_res_keywords() -> Iterator[KeywordDoc]:
-#     """Get all keywords of resources."""
-#     for resource in get_resources():
-#         yield from get_resource_keywords(resource)
 
 
 def find_keyword(keyword_name) -> List[KeywordDoc]:
