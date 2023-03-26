@@ -13,18 +13,23 @@ NORMAL_STYLE = Style.from_dict(
 
 ERROR_STYLE = Style.from_dict({"head": "fg:red"})
 
+
+BASE_STYLE = Style.from_dict(
+    {
+        "pygments.name.function": "bold",
+        "pygments.literal.string": "italic",
+        'bottom-toolbar': '#333333 bg:#ffffff',
+        'bottom-toolbar-key': '#333333 bg:#aaaaff',
+    }
+)
+
+
 DEBUG_PROMPT_STYLE = merge_styles(
     [
-        Style.from_dict(
-            {
-                "pygments.name.function": "bold",
-                "pygments.literal.string": "italic",
-            }
-        ),
+        BASE_STYLE,
         style_from_pygments_cls(get_style_by_name("solarized-dark")),
     ]
 )
-
 
 def get_pygments_styles():
     """Get all pygments styles."""

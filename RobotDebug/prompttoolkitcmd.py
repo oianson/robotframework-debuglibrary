@@ -2,6 +2,7 @@ import cmd
 import os
 import re
 
+from prompt_toolkit import HTML
 from prompt_toolkit.application import get_app
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.buffer import Buffer
@@ -196,9 +197,14 @@ def _(event):
             b.validate_and_handle()
 
 
-# shift + enter
-@kb.add("s-down", filter=~is_multiline)
-@kb.add("c-down", filter=is_multiline)
+@Condition
+def has_line_break():
+    b = get_app().current_buffer
+    return not re.search(r"\n", b.text)
+
+
+@kb.add("s-down", filter=has_line_break)
+@kb.add("c-down", filter=has_line_break)
 def _(event):
     b: Buffer = event.app.current_buffer
     b.newline()
@@ -388,6 +394,9 @@ Type "help" for more information.\
     def prompt_continuation(self, width, line_number, is_soft_wrap):
         return " " * width
 
+    def bottom_toolbar(self):
+        return [('class:bottom-toolbar-key', 'exit'), ('class:bottom-toolbar', ' to close... ')]
+
     def get_input(self):
         kwargs = {}
         if self.get_prompt_tokens:
@@ -398,6 +407,7 @@ Type "help" for more information.\
         try:
             line = prompt(
                 auto_suggest=AutoSuggestFromHistory(),
+                bottom_toolbar=self.bottom_toolbar,
                 clipboard=PyperclipClipboard(),
                 color_depth=ColorDepth.DEPTH_24_BIT,
                 completer=self.get_completer(),

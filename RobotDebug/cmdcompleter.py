@@ -2,7 +2,7 @@ import re
 
 from prompt_toolkit.completion import Completer, Completion
 
-from .robotkeyword import parse_keyword
+from .robotkeyword import parse_keyword, normalize_kw
 from .styles import _get_style_completions
 
 
@@ -58,7 +58,7 @@ class CmdCompleter(Completer):
                     ("." not in name and "." not in text)  # root level
                     or ("." in name and "." in text)
                 )  # library level
-                and name.lower().strip().startswith(content)
+                and normalize_kw(name).startswith(normalize_kw(content))
             )
         )
 

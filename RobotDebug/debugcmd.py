@@ -1,15 +1,19 @@
 import difflib
 import os
+from typing import List
 
+from prompt_toolkit.styles import merge_styles
 from robot.api import logger
 from robot.errors import ExecutionFailed, HandlerExecutionFailed
+from robot.libdocpkg.model import KeywordDoc
+from robot.libraries.BuiltIn import BuiltIn
+from robot.running.signalhandler import STOP_SIGNAL_MONITOR
 
 from .cmdcompleter import CmdCompleter
 from .globals import context
 from .prompttoolkitcmd import PromptToolkitCmd
-from .robotapp import get_robot_instance, reset_robotframework_exception
-from .robotkeyword import find_keyword, get_keywords, get_lib_keywords, run_command
-from .robotlib import get_builtin_libs, get_libs, get_libs_dict, match_libs
+from .robotkeyword import find_keyword, get_keywords, get_lib_keywords, run_command  #, get_res_keywords, get_resource_keywords
+from .robotlib import get_builtin_libs, get_libs, match_libs, get_resources  #, get_resources_dict, get_libs_dict
 from .sourcelines import RobotNeedUpgrade, print_source_lines, print_test_case_lines
 from .steplistener import is_step_mode, set_step_mode
 from .styles import (
@@ -20,7 +24,7 @@ from .styles import (
     get_style_by_name,
     print_error,
     print_output,
-    style_from_pygments_cls,
+    style_from_pygments_cls, BASE_STYLE,
 )
 
 HISTORY_PATH = os.environ.get("RFDEBUG_HISTORY", "~/.rfdebug_history")
@@ -56,7 +60,7 @@ class DebugCmd(PromptToolkitCmd):
 
     def __init__(self, completekey="tab", stdin=None, stdout=None):
         PromptToolkitCmd.__init__(self, completekey, stdin, stdout, history_path=HISTORY_PATH)
-        self.robot = get_robot_instance()
+        self.robot = BuiltIn()
 
     def get_prompt_tokens(self, prompt_text):
         return get_debug_prompt_tokens(prompt_text)
@@ -98,27 +102,36 @@ Access https://github.com/imbus/robotframework-debug for more details.\
                 (
                     lib.name,
                     lib.name,
-                    "Library: {0} {1}".format(lib.name, lib.version),
+                    "Library: {0} {1}".format(lib.name, lib.version if hasattr(lib, "version") else ""),
                 )
             )
+        # for res in get_resources():
+        #     commands.append(
+        #         (
+        #             res.name,
+        #             res.name,
+        #             "Resource: {0} {1}".format(res.name, ""),
+        #         )
+        #     )
 
+        keywords: List[KeywordDoc] = get_keywords() # [*get_keywords(), *get_res_keywords()]
         # keywords
-        for keyword in get_keywords():
+        for keyword in keywords:
             # name with library
-            name = "{0}.{1}".format(keyword["lib"], keyword["name"])
+            name = "{0}.{1}".format(keyword.parent.name, keyword.name)
             commands.append(
                 (
                     name,
-                    keyword["name"],
-                    "Keyword: {0}".format(keyword["summary"]),
+                    keyword.name,
+                    "Keyword: {0}".format(keyword.shortdoc),
                 )
             )
             # name without library
             commands.append(
                 (
-                    keyword["name"],
-                    keyword["name"],
-                    "Keyword[{0}.]: {1}".format(keyword["lib"], keyword["summary"]),
+                    keyword.name,
+                    keyword.name,
+                    "Keyword[{0}.]: {1}".format(keyword.parent.name, keyword.shortdoc),
                 )
             )
 
@@ -131,7 +144,7 @@ Access https://github.com/imbus/robotframework-debug for more details.\
         run_robot_command(self.robot, command)
 
     def _print_lib_info(self, lib, with_source_path=False):
-        print_output("   {}".format(lib.name), lib.version)
+        print_output("   {}".format(lib.name), lib.version if hasattr(lib, "version") else "")
         if lib.doc:
             logger.console("       {}".format(lib.doc.split("\n")[0]))
         if with_source_path:
@@ -169,12 +182,17 @@ Access https://github.com/imbus/robotframework-debug for more details.\
         if not matched:
             print_error("< not found library", lib_name)
             return
-        libs = get_libs_dict()
-        for name in matched:
-            lib = libs[name]
-            print_output("< Keywords of library", name)
-            for keyword in get_lib_keywords(lib):
-                print_output("   {}\t".format(keyword["name"]), keyword["summary"])
+        # libs = get_libs_dict()
+        # res = get_resources_dict()
+        for lib in matched:
+            if lib:
+                print_output("< Keywords of library", lib.name)
+                for keyword in get_lib_keywords(lib):
+                    print_output("   {}\t".format(keyword.name), keyword.shortdoc)
+            # else:
+            #     print_output("< Keywords of resource", name)
+            #     for keyword in get_resource_keywords(res[name]):
+            #         print_output("   {}\t".format(keyword.name), keyword.shortdoc)
 
     do_k = do_keywords
 
@@ -182,7 +200,7 @@ Access https://github.com/imbus/robotframework-debug for more details.\
         """Complete keywords command."""
         if len(line.split()) == 2:
             command, lib_name = line.split()
-            return match_libs(lib_name)
+            return [lib.name for lib in match_libs(lib_name)]
         elif len(line.split()) == 1 and line.endswith(" "):
             return [_.name for _ in get_libs()]
         return []
@@ -199,9 +217,9 @@ Access https://github.com/imbus/robotframework-debug for more details.\
         if not keywords:
             print_error("< not find keyword", keyword_name)
         elif len(keywords) == 1:
-            logger.console(keywords[0]["doc"])
+            logger.console(keywords[0].doc)
         else:
-            print_error("< found {} keywords".format(len(keywords)), ", ".join(keywords))
+            print_error("< found {} keywords".format(len(keywords)), ", ".join([k.name for k in keywords]))
 
     do_d = do_docs
 
@@ -289,5 +307,13 @@ Access https://github.com/imbus/robotframework-debug for more details.\
                 print_output(f"> {style}    ", style, _get_print_style(style))
             return
         style = difflib.get_close_matches(args.strip(), styles)[0]
-        self.prompt_style = style_from_pygments_cls(get_style_by_name(style))
+        self.prompt_style = merge_styles([BASE_STYLE, style_from_pygments_cls(get_style_by_name(style))])
         print_output("Set style to:   ", style, _get_print_style(str(style)))
+
+
+def reset_robotframework_exception():
+    """Resume RF after press ctrl+c during keyword running."""
+    if STOP_SIGNAL_MONITOR._signal_count:
+        STOP_SIGNAL_MONITOR._signal_count = 0
+        STOP_SIGNAL_MONITOR._running_keyword = True
+        logger.info("Reset last exception of DebugLibrary")

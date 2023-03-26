@@ -2,18 +2,20 @@ import re
 import tempfile
 import time
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Generator, Iterator
 
+from robot.libdocpkg.model import LibraryDoc, KeywordDoc
 from robot.libraries.BuiltIn import BuiltIn
 from robot.parsing import get_model
-from robot.running import TestSuite
+from robot.running import TestSuite, UserLibrary
 from robot.variables.search import is_variable
 
-from .robotlib import ImportedLibraryDocBuilder, get_libs
+from .robotlib import ImportedLibraryDocBuilder, get_libs, get_resources, ImportedResourceDocBuilder
 
 KEYWORD_SEP = re.compile("  +|\t")
 
 _lib_keywords_cache = {}
+_resource_keywords_cache = {}
 temp_resources = []
 last_keyword_exec_time = 0
 
@@ -35,41 +37,47 @@ def parse_keyword(command) -> Tuple[List[str], str, List[str]]:
     return variables, keyword, args
 
 
-def get_lib_keywords(library):
+def get_lib_keywords(library) -> List[KeywordDoc]:
     """Get keywords of imported library."""
-    if library.name in _lib_keywords_cache:
-        return _lib_keywords_cache[library.name]
-
-    lib = ImportedLibraryDocBuilder().build(library)
-    keywords = []
-    for keyword in lib.keywords:
-        keywords.append(
-            {
-                "name": keyword.name,
-                "lib": library.name,
-                "doc": keyword.doc,
-                "summary": keyword.doc.split("\n")[0],
-            }
-        )
-
-    _lib_keywords_cache[library.name] = keywords
-    return keywords
+    if library.name not in _lib_keywords_cache:
+        if isinstance(library, UserLibrary):
+            _lib_keywords_cache[library.name]: LibraryDoc = ImportedResourceDocBuilder().build(library)
+        else:
+            _lib_keywords_cache[library.name]: LibraryDoc = ImportedLibraryDocBuilder().build(library)
+    return _lib_keywords_cache[library.name].keywords
 
 
-def get_keywords():
+# def get_resource_keywords(resource) -> List[KeywordDoc]:
+#     """Get keywords of imported resource."""
+#     if resource.name not in _resource_keywords_cache:
+#         _resource_keywords_cache[resource.name]: LibraryDoc = ImportedResourceDocBuilder().build(resource)
+#     return _resource_keywords_cache[resource.name].keywords
+
+
+def get_keywords() -> Iterator[KeywordDoc]:
     """Get all keywords of libraries."""
     for lib in get_libs():
         yield from get_lib_keywords(lib)
 
 
-def find_keyword(keyword_name):
+# def get_res_keywords() -> Iterator[KeywordDoc]:
+#     """Get all keywords of resources."""
+#     for resource in get_resources():
+#         yield from get_resource_keywords(resource)
+
+
+def find_keyword(keyword_name) -> List[KeywordDoc]:
     keyword_name = keyword_name.lower()
     return [
         keyword
         for lib in get_libs()
         for keyword in get_lib_keywords(lib)
-        if keyword["name"].lower() == keyword_name
+        if normalize_kw(keyword.name) == normalize_kw(keyword_name)
     ]
+
+
+def normalize_kw(keyword_name):
+    return keyword_name.lower().replace("_", "").replace(" ", "")
 
 
 def run_command(builtin, command: str) -> List[Tuple[str, str]]:
