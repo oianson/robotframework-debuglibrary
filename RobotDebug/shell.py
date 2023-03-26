@@ -4,7 +4,6 @@ import tempfile
 
 from robot import run_cli
 
-
 TEST_SUITE = b"""*** Settings ***
 Library  RobotDebug
 

@@ -2,15 +2,15 @@ import re
 import tempfile
 import time
 from pathlib import Path
-from typing import List, Tuple, Iterator
+from typing import Iterator, List, Tuple
 
-from robot.libdocpkg.model import LibraryDoc, KeywordDoc
+from robot.libdocpkg.model import KeywordDoc, LibraryDoc
 from robot.libraries.BuiltIn import BuiltIn
 from robot.parsing import get_model
 from robot.running import TestSuite, UserLibrary
 from robot.variables.search import is_variable
 
-from .robotlib import ImportedLibraryDocBuilder, get_libs, ImportedResourceDocBuilder
+from .robotlib import ImportedLibraryDocBuilder, ImportedResourceDocBuilder, get_libs
 
 KEYWORD_SEP = re.compile("  +|\t")
 
@@ -41,9 +41,13 @@ def get_lib_keywords(library) -> List[KeywordDoc]:
     """Get keywords of imported library."""
     if library.name not in _lib_keywords_cache:
         if isinstance(library, UserLibrary):
-            _lib_keywords_cache[library.name]: LibraryDoc = ImportedResourceDocBuilder().build(library)
+            _lib_keywords_cache[library.name]: LibraryDoc = ImportedResourceDocBuilder().build(
+                library
+            )
         else:
-            _lib_keywords_cache[library.name]: LibraryDoc = ImportedLibraryDocBuilder().build(library)
+            _lib_keywords_cache[library.name]: LibraryDoc = ImportedLibraryDocBuilder().build(
+                library
+            )
     return _lib_keywords_cache[library.name].keywords
 
 

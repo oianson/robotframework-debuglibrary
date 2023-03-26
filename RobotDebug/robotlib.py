@@ -11,7 +11,9 @@ def get_builtin_libs():
 
 def get_libs():
     """Get imported robotframework library names."""
-    libs = [lib for lib in BuiltIn()._namespace._kw_store.libraries.values() if lib.name != "Reserved"]
+    libs = [
+        lib for lib in BuiltIn()._namespace._kw_store.libraries.values() if lib.name != "Reserved"
+    ]
     resources = BuiltIn()._namespace._kw_store.resources._items
     libs.extend(resources)
     return sorted(libs, key=lambda _: _.name)
@@ -27,7 +29,7 @@ class ImportedResourceDocBuilder(ResourceDocBuilder):
         libdoc = LibraryDoc(
             name=resource.name,
             doc=self._get_doc(resource, resource.name),
-            type='RESOURCE',
+            type="RESOURCE",
             scope="GLOBAL",
         )
         libdoc.keywords = KeywordDocBuilder().build_keywords(resource)

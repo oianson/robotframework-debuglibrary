@@ -17,6 +17,7 @@ from .robotlib import get_builtin_libs, get_libs, match_libs
 from .sourcelines import RobotNeedUpgrade, print_source_lines, print_test_case_lines
 from .steplistener import is_step_mode, set_step_mode
 from .styles import (
+    BASE_STYLE,
     DEBUG_PROMPT_STYLE,
     _get_print_style,
     get_debug_prompt_tokens,
@@ -24,7 +25,7 @@ from .styles import (
     get_style_by_name,
     print_error,
     print_output,
-    style_from_pygments_cls, BASE_STYLE,
+    style_from_pygments_cls,
 )
 
 HISTORY_PATH = os.environ.get("RFDEBUG_HISTORY", "~/.rfdebug_history")
@@ -39,7 +40,6 @@ def run_robot_command(robot_instance, command):
     try:
         result = run_command(robot_instance, command)
     except HandlerExecutionFailed as exc:
-        # print_error("! Expression:", command if "\n" not in command else f"\n{command}")
         print_error("! FAIL:", exc.message)
     except ExecutionFailed as exc:
         print_error("! Expression:", command if "\n" not in command else f"\n{command}")
@@ -90,34 +90,24 @@ Access https://github.com/imbus/robotframework-debug for more details.\
 
     def get_completer(self):
         """Get completer instance specified for robotframework."""
-        # commands
         commands = [
             (cmd_name, cmd_name, "DEBUG command: {0}".format(doc))
             for cmd_name, doc in self.get_helps()
         ]
 
-        # libraries
         for lib in get_libs():
             commands.append(
                 (
                     lib.name,
                     lib.name,
-                    "Library: {0} {1}".format(lib.name, lib.version if hasattr(lib, "version") else ""),
+                    "Library: {0} {1}".format(
+                        lib.name, lib.version if hasattr(lib, "version") else ""
+                    ),
                 )
             )
-        # for res in get_resources():
-        #     commands.append(
-        #         (
-        #             res.name,
-        #             res.name,
-        #             "Resource: {0} {1}".format(res.name, ""),
-        #         )
-        #     )
 
-        keywords: List[KeywordDoc] = get_keywords() # [*get_keywords(), *get_res_keywords()]
-        # keywords
+        keywords: List[KeywordDoc] = get_keywords()
         for keyword in keywords:
-            # name with library
             name = "{0}.{1}".format(keyword.parent.name, keyword.name)
             commands.append(
                 (
@@ -126,7 +116,6 @@ Access https://github.com/imbus/robotframework-debug for more details.\
                     "Keyword: {0}".format(keyword.shortdoc),
                 )
             )
-            # name without library
             commands.append(
                 (
                     keyword.name,
@@ -182,17 +171,11 @@ Access https://github.com/imbus/robotframework-debug for more details.\
         if not matched:
             print_error("< not found library", lib_name)
             return
-        # libs = get_libs_dict()
-        # res = get_resources_dict()
         for lib in matched:
             if lib:
                 print_output("< Keywords of library", lib.name)
                 for keyword in get_lib_keywords(lib):
                     print_output("   {}\t".format(keyword.name), keyword.shortdoc)
-            # else:
-            #     print_output("< Keywords of resource", name)
-            #     for keyword in get_resource_keywords(res[name]):
-            #         print_output("   {}\t".format(keyword.name), keyword.shortdoc)
 
     do_k = do_keywords
 
@@ -219,7 +202,9 @@ Access https://github.com/imbus/robotframework-debug for more details.\
         elif len(keywords) == 1:
             logger.console(keywords[0].doc)
         else:
-            print_error("< found {} keywords".format(len(keywords)), ", ".join([k.name for k in keywords]))
+            print_error(
+                "< found {} keywords".format(len(keywords)), ", ".join([k.name for k in keywords])
+            )
 
     do_d = do_docs
 
@@ -307,7 +292,9 @@ Access https://github.com/imbus/robotframework-debug for more details.\
                 print_output(f"> {style}    ", style, _get_print_style(style))
             return
         style = difflib.get_close_matches(args.strip(), styles)[0]
-        self.prompt_style = merge_styles([BASE_STYLE, style_from_pygments_cls(get_style_by_name(style))])
+        self.prompt_style = merge_styles(
+            [BASE_STYLE, style_from_pygments_cls(get_style_by_name(style))]
+        )
         print_output("Set style to:   ", style, _get_print_style(str(style)))
 
 

@@ -18,8 +18,8 @@ BASE_STYLE = Style.from_dict(
     {
         "pygments.name.function": "bold",
         "pygments.literal.string": "italic",
-        'bottom-toolbar': '#333333 bg:#ffffff',
-        'bottom-toolbar-key': '#333333 bg:#aaaaff',
+        "bottom-toolbar": "#333333 bg:#ffffff",
+        "bottom-toolbar-key": "#333333 bg:#aaaaff",
     }
 )
 
@@ -30,6 +30,7 @@ DEBUG_PROMPT_STYLE = merge_styles(
         style_from_pygments_cls(get_style_by_name("solarized-dark")),
     ]
 )
+
 
 def get_pygments_styles():
     """Get all pygments styles."""

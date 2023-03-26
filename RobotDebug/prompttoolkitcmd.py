@@ -24,111 +24,7 @@ from pygments.lexer import Lexer
 from pygments.lexers.robotframework import RobotFrameworkLexer
 
 from .cmdcompleter import RobotFrameworkLocalLexer
-# from pygments.lexers.robotframework import (
-#     ARGUMENT,
-#     GHERKIN,
-#     KEYWORD,
-#     SEPARATOR,
-#     SYNTAX,
-#     RowSplitter,
-#     Tokenizer,
-#     VariableTokenizer,
-#     _Table,
-# )
-
 from .robotkeyword import get_rprompt_text
-
-#
-# class KeywordCall(Tokenizer):
-#     _tokens = (KEYWORD, ARGUMENT)
-#     _gherkin_prefix = re.compile("^(Given|When|Then|And|But) ", re.IGNORECASE)
-#
-#     def __init__(self):
-#         Tokenizer.__init__(self)
-#         self._keyword_found = False
-#         self._assigns = 0
-#
-#     def _tokenize(self, value, index):
-#         match = self._gherkin_prefix.match(value)
-#         if not self._keyword_found and match:
-#             end = match.end()
-#             self._keyword_found = True
-#             return [(value[:end], GHERKIN), (value[end:], KEYWORD)]
-#         if not self._keyword_found and self._is_assign(value):
-#             self._assigns += 1
-#             return SYNTAX  # VariableTokenizer tokenizes this later.
-#         if self._keyword_found:
-#             return Tokenizer._tokenize(self, value, index - self._assigns)
-#         self._keyword_found = True
-#         return [(value, KEYWORD)]
-#
-#
-# class TestCaseTable(_Table):
-#     _test_template = None
-#     _default_template = None
-#     _gherkin_found = False
-#
-#     @property
-#     def _tokenizer_class(self):
-#         return KeywordCall
-#
-#     def _continues(self, value, index):
-#         return index > 0 and _Table._continues(self, value, index)
-#
-#     def _tokenize(self, value, index):
-#         if index == 0 and self._is_empty(value):
-#             return [(value, SYNTAX)]
-#         return _Table._tokenize(self, value, index)
-#
-#
-# class RowTokenizer:
-#     def __init__(self):
-#         self._table = TestCaseTable()
-#         self._splitter = RowSplitter()
-#
-#     def tokenize(self, row):
-#         for index, value in enumerate(self._splitter.split(row)):
-#             # First value, and every second after that, is a separator.
-#             index, separator = divmod(index - 1, 2)
-#             yield from self._tokenize(value, index, separator)
-#         self._table.end_row()
-#
-#     def _tokenize(self, value, index, separator):
-#         if separator:
-#             yield value, SEPARATOR
-#         else:
-#             yield from self._table.tokenize(value, index)
-#
-#
-# class RobotFrameworkOwnLexer(Lexer):
-#     """
-#     For Robot Framework test data.
-#
-#     Supports both space and pipe separated plain text formats.
-#
-#     .. versionadded:: 1.6
-#     """
-#
-#     name = "RobotFramework"
-#     url = "http://robotframework.org"
-#     aliases = ["robotframework"]
-#     filenames = ["*.robot", "*.resource"]
-#     mimetypes = ["text/x-robotframework"]
-#
-#     def __init__(self, **options):
-#         options["tabsize"] = 2
-#         options["encoding"] = "UTF-8"
-#         Lexer.__init__(self, **options)
-#
-#     def get_tokens_unprocessed(self, text):
-#         index = 0
-#         # for row in text.splitlines():
-#         for value, token in RowTokenizer().tokenize(text):
-#             for value, token in VariableTokenizer().tokenize(value, token):
-#                 if value:
-#                     yield index, token, str(value)
-#                     index += len(value)
-
 
 kb = KeyBindings()
 
@@ -398,7 +294,7 @@ Type "help" for more information.\
         return " " * width
 
     def bottom_toolbar(self):
-        return [('class:bottom-toolbar-key', 'exit'), ('class:bottom-toolbar', ' to close... ')]
+        return [("class:bottom-toolbar-key", "exit"), ("class:bottom-toolbar", " to close... ")]
 
     def get_input(self):
         kwargs = {}

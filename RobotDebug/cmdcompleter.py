@@ -2,16 +2,10 @@ import re
 
 from prompt_toolkit.completion import Completer, Completion
 from pygments.lexer import Lexer
-from robot.parsing.lexer.context import ResourceFileContext
-from robot.parsing.lexer.lexer import FileLexer
-from robot.parsing.lexer.statementlexers import KeywordCallLexer
-from robot.parsing.lexer.tokenizer import Tokenizer
-from robot.parsing.lexer import get_tokens
-from robot.parsing.parser.parser import _tokens_to_statements, _statements_to_model
-from pygments.lexers.robotframework import RobotFrameworkLexer
 from pygments.token import Token
+from robot.parsing.lexer import get_tokens
 
-from .robotkeyword import parse_keyword, normalize_kw
+from .robotkeyword import normalize_kw, parse_keyword
 from .styles import _get_style_completions
 
 
@@ -141,11 +135,11 @@ class CmdCompleter(Completer):
 
 
 class RobotFrameworkLocalLexer(Lexer):
-    name = 'RobotFramework'
-    url = 'http://robotframework.org'
-    aliases = ['robotframework']
-    filenames = ['*.robot', '*.resource']
-    mimetypes = ['text/x-robotframework']
+    name = "RobotFramework"
+    url = "http://robotframework.org"
+    aliases = ["robotframework"]
+    filenames = ["*.robot", "*.resource"]
+    mimetypes = ["text/x-robotframework"]
 
     # PYGMENTS_STANDARD_TYPES = {
     #     Token: '',
@@ -239,72 +233,71 @@ class RobotFrameworkLocalLexer(Lexer):
     #     Generic.Traceback: 'gt',
     # }
 
-
     ROBOT_TO_PYGMENTS = {
-        'SETTING HEADER': Token.Generic.Heading,
-        'VARIABLE HEADER': Token.Generic.Heading,
-        'TESTCASE HEADER': Token.Generic.Heading,
-        'TASK HEADER': Token.Generic.Heading,
-        'KEYWORD HEADER': Token.Generic.Heading,
-        'COMMENT HEADER': Token.Generic.Heading,
-        'TESTCASE NAME': Token.Name.Class,
-        'KEYWORD NAME': Token.Name.Class,
-        'DOCUMENTATION': Token.Name.Attribute,
-        'SUITE SETUP': Token.Name.Attribute,
-        'SUITE TEARDOWN': Token.Name.Attribute,
-        'METADATA': Token.Name.Attribute,
-        'TEST SETUP': Token.Name.Attribute,
-        'TEST TEARDOWN': Token.Name.Attribute,
-        'TEST TEMPLATE': Token.Name.Attribute,
-        'TEST TIMEOUT': Token.Name.Attribute,
-        'FORCE TAGS': Token.Name.Attribute,
-        'DEFAULT TAGS': Token.Name.Attribute,
-        'KEYWORD TAGS': Token.Name.Attribute,
-        'LIBRARY': Token.Name.Attribute,
-        'RESOURCE': Token.Name.Attribute,
-        'VARIABLES': Token.Name.Attribute,
-        'SETUP': Token.Keyword.Namespace,
-        'TEARDOWN': Token.Keyword.Namespace,
-        'TEMPLATE': Token.Keyword.Namespace,
-        'TIMEOUT': Token.Keyword.Namespace,
-        'TAGS': Token.Keyword.Namespace,
-        'ARGUMENTS': Token.Keyword.Namespace,
-        'RETURN_SETTING': Token.Keyword.Namespace,
-        'NAME': Token.Name,
-        'VARIABLE': Token.Name.Variable,
-        'ARGUMENT': Token.String,
-        'ASSIGN': Token.Name.Variable,
-        'KEYWORD': Token.Name.Function,
-        'WITH NAME': Token.Keyword,
-        'FOR': Token.Keyword,
-        'FOR SEPARATOR': Token.Keyword,
-        'END': Token.Keyword,
-        'IF': Token.Keyword,
-        'INLINE IF': Token.Keyword,
-        'ELSE IF': Token.Keyword,
-        'ELSE': Token.Keyword,
-        'TRY': Token.Keyword,
-        'EXCEPT': Token.Keyword,
-        'FINALLY': Token.Keyword,
-        'AS': Token.Keyword,
-        'WHILE': Token.Keyword,
-        'RETURN STATEMENT': Token.Keyword,
-        'CONTINUE': Token.Keyword,
-        'BREAK': Token.Keyword,
-        'OPTION': Token.Keyword,
-        'SEPARATOR': Token.Punctuation,
-        'COMMENT': Token.Comment,
-        'CONTINUATION': Token.Operator,
-        'CONFIG': Token.Punctuation,
-        'EOL': Token.Punctuation,
-        'EOS': Token.Punctuation,
-        'ERROR': Token.Error,
-        'FATAL ERROR': Token.Error
+        "SETTING HEADER": Token.Generic.Heading,
+        "VARIABLE HEADER": Token.Generic.Heading,
+        "TESTCASE HEADER": Token.Generic.Heading,
+        "TASK HEADER": Token.Generic.Heading,
+        "KEYWORD HEADER": Token.Generic.Heading,
+        "COMMENT HEADER": Token.Generic.Heading,
+        "TESTCASE NAME": Token.Name.Class,
+        "KEYWORD NAME": Token.Name.Class,
+        "DOCUMENTATION": Token.Name.Attribute,
+        "SUITE SETUP": Token.Name.Attribute,
+        "SUITE TEARDOWN": Token.Name.Attribute,
+        "METADATA": Token.Name.Attribute,
+        "TEST SETUP": Token.Name.Attribute,
+        "TEST TEARDOWN": Token.Name.Attribute,
+        "TEST TEMPLATE": Token.Name.Attribute,
+        "TEST TIMEOUT": Token.Name.Attribute,
+        "FORCE TAGS": Token.Name.Attribute,
+        "DEFAULT TAGS": Token.Name.Attribute,
+        "KEYWORD TAGS": Token.Name.Attribute,
+        "LIBRARY": Token.Name.Attribute,
+        "RESOURCE": Token.Name.Attribute,
+        "VARIABLES": Token.Name.Attribute,
+        "SETUP": Token.Keyword.Namespace,
+        "TEARDOWN": Token.Keyword.Namespace,
+        "TEMPLATE": Token.Keyword.Namespace,
+        "TIMEOUT": Token.Keyword.Namespace,
+        "TAGS": Token.Keyword.Namespace,
+        "ARGUMENTS": Token.Keyword.Namespace,
+        "RETURN_SETTING": Token.Keyword.Namespace,
+        "NAME": Token.Name,
+        "VARIABLE": Token.Name.Variable,
+        "ARGUMENT": Token.String,
+        "ASSIGN": Token.Name.Variable,
+        "KEYWORD": Token.Name.Function,
+        "WITH NAME": Token.Keyword,
+        "FOR": Token.Keyword,
+        "FOR SEPARATOR": Token.Keyword,
+        "END": Token.Keyword,
+        "IF": Token.Keyword,
+        "INLINE IF": Token.Keyword,
+        "ELSE IF": Token.Keyword,
+        "ELSE": Token.Keyword,
+        "TRY": Token.Keyword,
+        "EXCEPT": Token.Keyword,
+        "FINALLY": Token.Keyword,
+        "AS": Token.Keyword,
+        "WHILE": Token.Keyword,
+        "RETURN STATEMENT": Token.Keyword,
+        "CONTINUE": Token.Keyword,
+        "BREAK": Token.Keyword,
+        "OPTION": Token.Keyword,
+        "SEPARATOR": Token.Punctuation,
+        "COMMENT": Token.Comment,
+        "CONTINUATION": Token.Operator,
+        "CONFIG": Token.Punctuation,
+        "EOL": Token.Punctuation,
+        "EOS": Token.Punctuation,
+        "ERROR": Token.Error,
+        "FATAL ERROR": Token.Error,
     }
 
     def __init__(self, **options):
-        options['tabsize'] = 2
-        options['encoding'] = 'UTF-8'
+        options["tabsize"] = 2
+        options["encoding"] = "UTF-8"
         Lexer.__init__(self, **options)
 
     # def parse_doc(self, document):
@@ -335,59 +328,35 @@ class RobotFrameworkLocalLexer(Lexer):
     #     return statement_at_cursor, token_at_cursor
 
     def get_robot_token(self, text):
-        if text.startswith("*"):
-            tok = list(get_tokens(text))
-            # return tok
-            token_list = []
-            for token in tok:
-                token_dict = {
-                    "type": token.type,
-                    "value": token.value,
-                    "start_pos": token.col_offset,
-                    "end_pos": token.end_col_offset,
-                    "line": token.lineno
-                }
-                token_list.append(token_dict)
-            return token_list
-        MAGIC = " " * 20
-        if "\n" in text:
-            text = f"\n{MAGIC}".join(text.split("\n"))
-        suite_str = f"*** Test Cases ***\nFake Test\n{MAGIC}{text}"
-        tok = list(get_tokens(suite_str))[6:]
-        token_list = []
-        for token in tok:
-            if token.type in ["SEPARATOR", "EOL"] and token.col_offset == 0 and token.end_col_offset >= 20:
-                if token.end_col_offset == 20:
-                    continue
-                token_dict = {
-                    "type": token.type,
-                    "value": token.value[20:],
-                    "start_pos": 0,
-                    "end_pos": token.end_col_offset - 20,
-                    "line": token.lineno - 2
-                }
-            else:
-                token_dict = {
-                    "type": token.type,
-                    "value": token.value,
-                    "start_pos": token.col_offset - 20,
-                    "end_pos": token.end_col_offset - 20,
-                    "line": token.lineno - 2
-                }
-            token_list.append(token_dict)
-        return token_list
+        if text.strip().startswith("**"):
+            yield from get_tokens(text)
+        else:
+            marker_len = 20
+            new_line_start = " " * marker_len
+            if "\n" in text:
+                text = f"\n{new_line_start}".join(text.split("\n"))
+            suite_str = f"*** Test Cases ***\nFake Test\n{new_line_start}{text}"
+            for token in list(get_tokens(suite_str))[6:]:
+                if (
+                    token.type in ["SEPARATOR", "EOL"]
+                    and token.col_offset == 0
+                    and token.end_col_offset >= marker_len
+                ):
+                    if token.end_col_offset == marker_len:
+                        continue
+                    token.value = token.value[marker_len:]
+                    token.col_offset = 0
+                    token.lineno = token.lineno - 2
+                else:
+                    token.col_offset = token.col_offset - marker_len
+                    token.lineno = token.lineno - 2
+                yield token
 
     def get_tokens_unprocessed(self, text):
         token_list = self.get_robot_token(text)
-        pygment_tokens = []
         index = 0
         for token in token_list:
-            if len(token["value"]) == 0:
+            if len(token.value) == 0:
                 continue
-            pygment_tokens.append(
-                (index, self.ROBOT_TO_PYGMENTS.get(token["type"], Token.Generic.Error), token["value"])
-            )
-            index += len(token["value"])
-        original_tokens = list(RobotFrameworkLexer().get_tokens_unprocessed(text))
-        return pygment_tokens
-
+            yield index, self.ROBOT_TO_PYGMENTS.get(token.type, Token.Generic.Error), token.value
+            index += len(token.value)
