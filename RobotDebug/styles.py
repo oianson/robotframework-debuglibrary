@@ -18,6 +18,8 @@ BASE_STYLE = Style.from_dict(
     {
         "pygments.name.function": "bold",
         "pygments.literal.string": "italic",
+        # "pygments.name.variable.instance": "italic",
+        "pygments.name.class": "underline",
         "bottom-toolbar": "#333333 bg:#ffffff",
         "bottom-toolbar-key": "#333333 bg:#aaaaff",
     }

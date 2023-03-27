@@ -1,3 +1,6 @@
+import re
+from contextlib import suppress
+
 from pygments.lexer import Lexer
 from pygments.token import Token
 from robot.parsing import get_tokens
@@ -103,37 +106,37 @@ class RobotFrameworkLocalLexer(Lexer):
     # }
 
     ROBOT_TO_PYGMENTS = {
-        "SETTING HEADER": Token.Generic.Heading,
-        "VARIABLE HEADER": Token.Generic.Heading,
-        "TESTCASE HEADER": Token.Generic.Heading,
-        "TASK HEADER": Token.Generic.Heading,
-        "KEYWORD HEADER": Token.Generic.Heading,
-        "COMMENT HEADER": Token.Generic.Heading,
+        "SETTING HEADER": Token.Keyword.Namespace,
+        "VARIABLE HEADER": Token.Keyword.Namespace,
+        "TESTCASE HEADER": Token.Keyword.Namespace,
+        "TASK HEADER": Token.Keyword.Namespace,
+        "KEYWORD HEADER": Token.Keyword.Namespace,
+        "COMMENT HEADER": Token.Keyword.Namespace,
         "TESTCASE NAME": Token.Name.Class,
         "KEYWORD NAME": Token.Name.Class,
-        "DOCUMENTATION": Token.Name.Attribute,
-        "SUITE SETUP": Token.Name.Attribute,
-        "SUITE TEARDOWN": Token.Name.Attribute,
-        "METADATA": Token.Name.Attribute,
-        "TEST SETUP": Token.Name.Attribute,
-        "TEST TEARDOWN": Token.Name.Attribute,
-        "TEST TEMPLATE": Token.Name.Attribute,
-        "TEST TIMEOUT": Token.Name.Attribute,
-        "FORCE TAGS": Token.Name.Attribute,
-        "DEFAULT TAGS": Token.Name.Attribute,
-        "KEYWORD TAGS": Token.Name.Attribute,
-        "LIBRARY": Token.Name.Attribute,
-        "RESOURCE": Token.Name.Attribute,
-        "VARIABLES": Token.Name.Attribute,
-        "SETUP": Token.Keyword.Namespace,
-        "TEARDOWN": Token.Keyword.Namespace,
-        "TEMPLATE": Token.Keyword.Namespace,
-        "TIMEOUT": Token.Keyword.Namespace,
-        "TAGS": Token.Keyword.Namespace,
-        "ARGUMENTS": Token.Keyword.Namespace,
-        "RETURN_SETTING": Token.Keyword.Namespace,
+        "DOCUMENTATION": Token.Name.Label,
+        "SUITE SETUP": Token.Name.Label,
+        "SUITE TEARDOWN": Token.Name.Label,
+        "METADATA": Token.Name.Label,
+        "TEST SETUP": Token.Name.Label,
+        "TEST TEARDOWN": Token.Name.Label,
+        "TEST TEMPLATE": Token.Name.Label,
+        "TEST TIMEOUT": Token.Name.Label,
+        "FORCE TAGS": Token.Name.Label,
+        "DEFAULT TAGS": Token.Name.Label,
+        "KEYWORD TAGS": Token.Name.Label,
+        "LIBRARY": Token.Name.Label,
+        "RESOURCE": Token.Name.Label,
+        "VARIABLES": Token.Name.Label,
+        "SETUP": Token.Name.Property,
+        "TEARDOWN": Token.Name.Property,
+        "TEMPLATE": Token.Name.Property,
+        "TIMEOUT": Token.Name.Property,
+        "TAGS": Token.Name.Property,
+        "ARGUMENTS": Token.Name.Property,
+        "RETURN_SETTING": Token.Name.Property,
         "NAME": Token.Name,
-        "VARIABLE": Token.Name.Variable,
+        "VARIABLE": Token.Name.Variable.Instance,
         "ARGUMENT": Token.String,
         "ASSIGN": Token.Name.Variable,
         "KEYWORD": Token.Name.Function,
@@ -227,5 +230,18 @@ class RobotFrameworkLocalLexer(Lexer):
         for token in token_list:
             if len(token.value) == 0:
                 continue
-            yield index, self.ROBOT_TO_PYGMENTS.get(token.type, Token.Generic.Error), token.value
-            index += len(token.value)
+            try:
+                var_tokens = token.tokenize_variables()
+            except Exception:
+                var_tokens = [token]
+            for v_token in var_tokens:
+                yield index, self.to_pygments_token_type(v_token), v_token.value
+                index += len(v_token.value)
+
+    def to_pygments_token_type(self, token):
+        if token.type == "VARIABLE":
+            if re.match(r"[$&@%]\{(EMPTY|TRUE|FALSE|NONE)}", token.value, re.IGNORECASE):
+                return Token.Name.Constant
+            if re.match(r"\$\{\d+}", token.value):
+                return Token.Name.Constant
+        return self.ROBOT_TO_PYGMENTS.get(token.type, Token.Generic.Error)
