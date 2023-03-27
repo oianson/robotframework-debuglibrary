@@ -1,9 +1,42 @@
 import re
 
 from prompt_toolkit.completion import Completer, Completion
+from robot.libraries.BuiltIn import BuiltIn
+from robot.parsing.parser.parser import _tokens_to_statements
 
+from .lexer import get_robot_token, get_variable_token
+from .prompttoolkitcmd import set_toolbar_key
 from .robotkeyword import normalize_kw, parse_keyword
 from .styles import _get_style_completions
+
+
+def find_token_at_cursor(cursor_col, cursor_row, statement):
+    statement_type = None
+    for token in statement.tokens:
+        if token.type in ["KEYWORD", "IF", "FOR", "ELSE", "ELSE IF"]:
+            statement_type = token.type
+        if (
+            token.lineno == cursor_row + 1
+            and token.col_offset <= cursor_col <= token.end_col_offset
+        ):
+            return statement_type, token, cursor_col - token.col_offset
+    return None, None, None
+
+
+def find_statement_details_at_cursor(cursor_col, cursor_row, statements):
+    for statement in statements:
+        if not statement:
+            continue
+        if (
+            statement.lineno <= cursor_row + 1 <= statement.end_lineno
+            and statement.col_offset <= cursor_col <= statement.end_col_offset
+        ):
+            statement_type, token, cursor_pos = find_token_at_cursor(
+                cursor_col, cursor_row, statement
+            )
+            if token:
+                return statement, statement_type, token, cursor_pos
+    return None, None, None, None
 
 
 class CmdCompleter(Completer):
@@ -59,7 +92,15 @@ class CmdCompleter(Completer):
         """Compute suggestions."""
         # RobotFrameworkLocalLexer().parse_doc(document)
         text = document.current_line_before_cursor
-        variables, keyword, args = parse_keyword(text.strip())
+        cursor_col = document.cursor_position_col
+        cursor_row = document.cursor_position_row
+        token_list = list(get_robot_token(document.text))
+        statements = list(_tokens_to_statements(token_list))
+        statement, statement_type, token, cursor_pos = find_statement_details_at_cursor(
+            cursor_col, cursor_row, statements
+        )
+
+        # variables, keyword, args = parse_keyword(text.strip())
         if "FOR".startswith(text):
             yield from [
                 Completion(
@@ -101,7 +142,25 @@ class CmdCompleter(Completer):
             yield from _get_style_completions(text.lower())
         elif text.startswith("*"):
             yield from self._get_resource_completions(text.lower())
-        elif keyword:
-            if not args:
-                yield from self._get_command_completions(text.lower())
-
+        elif token:
+            vars = list(get_variable_token([token]))
+            for var in vars:
+                if var.col_offset <= cursor_col <= var.end_col_offset:
+                    token = var
+                    cursor_pos = cursor_col - var.col_offset
+            set_toolbar_key(statement_type, token, cursor_pos)
+            if token.type in ["ASSIGN", "VARIABLE"] or (
+                token.type == "KEYWORD" and re.fullmatch(r"[$&@]\{.[^}]}", token.value)
+            ):
+                yield from [
+                    Completion(
+                        f"{var[:-1]}",
+                        -cursor_pos,
+                        display=var,
+                        display_meta=repr(val),
+                    )
+                    for var, val in BuiltIn().get_variables().items()
+                    if normalize_kw(var[1:]).startswith(normalize_kw(token.value[1:cursor_pos]))
+                ]
+            elif token.type == "KEYWORD":
+                yield from self._get_command_completions(token.value.lower())

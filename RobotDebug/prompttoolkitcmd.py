@@ -2,26 +2,17 @@ import cmd
 import os
 import re
 
-from prompt_toolkit import HTML
 from prompt_toolkit.application import get_app
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
 from prompt_toolkit.cursor_shapes import CursorShape
-from prompt_toolkit.filters import (
-    Condition,
-    has_completions,
-    has_selection,
-    in_paste_mode,
-    is_multiline,
-)
+from prompt_toolkit.filters import Condition, has_completions, has_selection
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.output import ColorDepth
 from prompt_toolkit.shortcuts import CompleteStyle, prompt
-from pygments.lexer import Lexer
-from pygments.lexers.robotframework import RobotFrameworkLexer
 
 from .lexer import RobotFrameworkLocalLexer
 from .robotkeyword import get_rprompt_text
@@ -168,6 +159,50 @@ def _(event):
     b.exit_selection()
 
 
+@kb.add("{")
+def _(event):
+    b = event.current_buffer
+    b.insert_text("{")
+    b.insert_text("}", move_cursor=False)
+
+
+@kb.add("[")
+def _(event):
+    b = event.current_buffer
+    b.insert_text("[")
+    b.insert_text("]", move_cursor=False)
+
+
+MOUSE_SUPPORT = True
+
+
+@kb.add("f12")
+def _(event):
+    global MOUSE_SUPPORT
+    MOUSE_SUPPORT = not MOUSE_SUPPORT
+
+
+TOOLBAR_KEY = ("", None, None)
+
+
+def set_toolbar_key(statement_type, token, cursor_pos):
+    global TOOLBAR_KEY
+    TOOLBAR_KEY = statement_type, token, cursor_pos
+
+
+def bottom_toolbar():
+    return [
+        ("class:bottom-toolbar-key", "STATEMENT: "),
+        ("class:bottom-toolbar", f"{TOOLBAR_KEY[0]}    "),
+        ("class:bottom-toolbar-key", "value: "),
+        ("class:bottom-toolbar", f"{TOOLBAR_KEY[1].value if TOOLBAR_KEY[1] else ''}    "),
+        ("class:bottom-toolbar-key", "TOKEN: "),
+        ("class:bottom-toolbar", f"{TOOLBAR_KEY[1].type if TOOLBAR_KEY[1] else ''}    "),
+        ("class:bottom-toolbar-key", "TOKEN: "),
+        ("class:bottom-toolbar", f"{TOOLBAR_KEY[2] if TOOLBAR_KEY[2] else ''}    "),
+    ]
+
+
 class BaseCmd(cmd.Cmd):
     """Basic REPL tool."""
 
@@ -291,14 +326,6 @@ Type "help" for more information.\
     def prompt_continuation(self, width, line_number, is_soft_wrap):
         return " " * width
 
-    def bottom_toolbar(self):
-        return [
-            ("class:bottom-toolbar-key", "more features"),
-            ("class:bottom-toolbar", " coming soon...     "),
-            ("class:bottom-toolbar-key", "Shift+ArrowDown"),
-            ("class:bottom-toolbar", " to insert a new line."),
-        ]
-
     def get_input(self):
         kwargs = {}
         if self.get_prompt_tokens:
@@ -309,7 +336,7 @@ Type "help" for more information.\
         try:
             line = prompt(
                 auto_suggest=AutoSuggestFromHistory(),
-                bottom_toolbar=self.bottom_toolbar,
+                bottom_toolbar=bottom_toolbar,
                 clipboard=PyperclipClipboard(),
                 color_depth=ColorDepth.DEPTH_24_BIT,
                 completer=self.get_completer(),
@@ -321,10 +348,10 @@ Type "help" for more information.\
                 key_bindings=kb,
                 lexer=PygmentsLexer(RobotFrameworkLocalLexer),
                 message=prompt_str,
-                mouse_support=True,
+                mouse_support=MOUSE_SUPPORT,
                 prompt_continuation=self.prompt_continuation,
                 rprompt=get_rprompt_text(),
-                **kwargs
+                **kwargs,
             )
         except EOFError:
             line = "EOF"

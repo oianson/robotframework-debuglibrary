@@ -3,7 +3,46 @@ from contextlib import suppress
 
 from pygments.lexer import Lexer
 from pygments.token import Token
-from robot.parsing import get_tokens
+from robot.parsing import get_model, get_tokens
+from robot.parsing.parser.parser import _tokens_to_statements
+
+
+def get_robot_token(text):
+    if text.strip().startswith("**"):
+        yield from get_tokens(text)
+    else:
+        marker_len = 20
+        new_line_start = " " * marker_len
+        if "\n" in text:
+            text = f"\n{new_line_start}".join(text.split("\n"))
+        suite_str = f"*** Test Cases ***\nFake Test\n{new_line_start}{text}"
+        for token in list(get_tokens(suite_str))[6:]:
+            if (
+                token.type in ["SEPARATOR", "EOL"]
+                and token.col_offset == 0
+                and token.end_col_offset >= marker_len
+            ):
+                if token.end_col_offset == marker_len:
+                    continue
+                token.value = token.value[marker_len:]
+                token.col_offset = 0
+                token.lineno = token.lineno - 2
+            else:
+                token.col_offset = token.col_offset - marker_len
+                token.lineno = token.lineno - 2
+            yield token
+
+
+def get_variable_token(token_list):
+    for token in token_list:
+        if len(token.value) == 0:
+            continue
+        try:
+            var_tokens = token.tokenize_variables()
+        except Exception:
+            var_tokens = [token]
+        for v_token in var_tokens:
+            yield v_token
 
 
 class RobotFrameworkLocalLexer(Lexer):
@@ -199,44 +238,12 @@ class RobotFrameworkLocalLexer(Lexer):
     #                         break
     #     return statement_at_cursor, token_at_cursor
 
-    def get_robot_token(self, text):
-        if text.strip().startswith("**"):
-            yield from get_tokens(text)
-        else:
-            marker_len = 20
-            new_line_start = " " * marker_len
-            if "\n" in text:
-                text = f"\n{new_line_start}".join(text.split("\n"))
-            suite_str = f"*** Test Cases ***\nFake Test\n{new_line_start}{text}"
-            for token in list(get_tokens(suite_str))[6:]:
-                if (
-                    token.type in ["SEPARATOR", "EOL"]
-                    and token.col_offset == 0
-                    and token.end_col_offset >= marker_len
-                ):
-                    if token.end_col_offset == marker_len:
-                        continue
-                    token.value = token.value[marker_len:]
-                    token.col_offset = 0
-                    token.lineno = token.lineno - 2
-                else:
-                    token.col_offset = token.col_offset - marker_len
-                    token.lineno = token.lineno - 2
-                yield token
-
     def get_tokens_unprocessed(self, text):
-        token_list = self.get_robot_token(text)
+        token_list = get_robot_token(text)
         index = 0
-        for token in token_list:
-            if len(token.value) == 0:
-                continue
-            try:
-                var_tokens = token.tokenize_variables()
-            except Exception:
-                var_tokens = [token]
-            for v_token in var_tokens:
-                yield index, self.to_pygments_token_type(v_token), v_token.value
-                index += len(v_token.value)
+        for v_token in get_variable_token(token_list):
+            yield index, self.to_pygments_token_type(v_token), v_token.value
+            index += len(v_token.value)
 
     def to_pygments_token_type(self, token):
         if token.type == "VARIABLE":

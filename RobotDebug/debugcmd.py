@@ -109,20 +109,16 @@ Access https://github.com/imbus/robotframework-debug for more details.\
 
         keywords: List[KeywordDoc] = get_keywords()
         for keyword in keywords:
-            name = "{0}.{1}".format(keyword.parent.name, keyword.name)
+            name = f"{keyword.parent.name}.{keyword.name}"
             commands.append(
                 (
                     name,
                     keyword.name,
-                    "Keyword: {0}".format(keyword.shortdoc),
+                    keyword.shortdoc,
                 )
             )
             commands.append(
-                (
-                    keyword.name,
-                    keyword.name,
-                    "Keyword[{0}.]: {1}".format(keyword.parent.name, keyword.shortdoc),
-                )
+                (keyword.name, keyword.name, f"{keyword.shortdoc} [{keyword.parent.name}]")
             )
 
         return CmdCompleter(commands, self)
