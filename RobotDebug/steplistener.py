@@ -1,4 +1,5 @@
 import inspect
+from pathlib import Path
 
 from .globals import context
 
@@ -7,7 +8,7 @@ class RobotLibraryStepListenerMixin:
     ROBOT_LISTENER_API_VERSION = 2
 
     def __init__(self):
-        super(RobotLibraryStepListenerMixin, self).__init__()
+        super().__init__()
         self.ROBOT_LIBRARY_LISTENER = [self]
 
     def _start_keyword(self, name, attrs):
@@ -26,9 +27,9 @@ class RobotLibraryStepListenerMixin:
             lineno_0_based = lineno - 1
             context.current_source_path = path
             context.current_source_lineno = lineno
-            print("> {}({})".format(path, lineno))
-            line = open(path).readlines()[lineno_0_based].strip()
-            print("-> {}".format(line))
+            print(f"> {path}({lineno})")
+            line = Path(path).open().readlines()[lineno_0_based].strip()
+            print(f"-> {line}")
 
         if attrs["assign"]:
             assign = "%s = " % ", ".join(attrs["assign"])
@@ -37,7 +38,7 @@ class RobotLibraryStepListenerMixin:
             name = "{}.{}".format(attrs["libname"], attrs["kwname"])
 
         translated = "{}{}  {}".format(assign, name, "  ".join(attrs["args"]))
-        print("=> {}".format(translated))
+        print(f"=> {translated}")
 
         # callback debug interface
         self.debug()

@@ -43,7 +43,7 @@ def print_output(head, message, style=NORMAL_STYLE):
     """Print prompt-toolkit tokens to output."""
     tokens = FormattedText(
         [
-            ("class:head", "{0} ".format(head)),
+            ("class:head", f"{head} "),
             ("class:message", message),
             ("", ""),
         ]

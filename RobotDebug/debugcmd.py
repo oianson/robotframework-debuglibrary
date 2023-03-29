@@ -15,7 +15,11 @@ from .globals import context
 from .prompttoolkitcmd import PromptToolkitCmd
 from .robotkeyword import find_keyword, get_keywords, get_lib_keywords, run_command
 from .robotlib import get_builtin_libs, get_libs, match_libs
-from .sourcelines import RobotNeedUpgrade, print_source_lines, print_test_case_lines
+from .sourcelines import (
+    RobotNeedUpgradeError,
+    print_source_lines,
+    print_test_case_lines,
+)
 from .steplistener import is_step_mode, set_step_mode
 from .styles import (
     BASE_STYLE,
@@ -60,7 +64,7 @@ class DebugCmd(PromptToolkitCmd):
     prompt_style = DEBUG_PROMPT_STYLE
 
     def __init__(self, completekey="tab", stdin=None, stdout=None):
-        PromptToolkitCmd.__init__(self, completekey, stdin, stdout, history_path=HISTORY_PATH)
+        super().__init__(completekey, stdin, stdout, history_path=HISTORY_PATH)
         self.robot = BuiltIn()
 
     def get_prompt_tokens(self, prompt_text):
@@ -86,13 +90,12 @@ use the TAB keyboard key to autocomplete keywords.
 Access https://github.com/imbus/robotframework-debug for more details.\
 """
             )
-
-        PromptToolkitCmd.do_help(self, arg)
+        super().do_help(arg)
 
     def get_completer(self):
         """Get completer instance specified for robotframework."""
         commands = [
-            (cmd_name, cmd_name, "DEBUG command: {0}".format(doc))
+            (cmd_name, cmd_name, f"DEBUG command: {doc}")
             for cmd_name, doc in self.get_helps()
         ]
 
@@ -101,9 +104,7 @@ Access https://github.com/imbus/robotframework-debug for more details.\
                 (
                     lib.name,
                     lib.name,
-                    "Library: {0} {1}".format(
-                        lib.name, lib.version if hasattr(lib, "version") else ""
-                    ),
+                    f"Library: {lib.name} {lib.version if hasattr(lib, 'version') else ''}",
                 )
             )
 
@@ -130,11 +131,12 @@ Access https://github.com/imbus/robotframework-debug for more details.\
         run_robot_command(self.robot, command)
 
     def _print_lib_info(self, lib, with_source_path=False):
-        print_output("   {}".format(lib.name), lib.version if hasattr(lib, "version") else "")
+        print_output(f"   {lib.name}", lib.version if hasattr(lib, "version") else "")
         if lib.doc:
-            logger.console("       {}".format(lib.doc.split("\n")[0]))
+            doc = lib.doc.split('\n')[0]
+            logger.console(f"       {doc}")
         if with_source_path:
-            logger.console("       {}".format(lib.source))
+            logger.console(f"       {lib.source}")
 
     def do_libs(self, args):
         """Print imported and builtin libraries, with source if `-s` specified.
@@ -150,14 +152,6 @@ Access https://github.com/imbus/robotframework-debug for more details.\
 
     do_ls = do_libs
 
-    def complete_libs(self, text, line, begin_idx, end_idx):
-        """Complete libs command."""
-        if len(line.split()) == 1 and line.endswith(" "):
-            return ["-s"]
-        return []
-
-    complete_l = complete_libs
-
     def do_keywords(self, args):
         """Print keywords of libraries, all or starts with <lib_name>.
 
@@ -172,20 +166,9 @@ Access https://github.com/imbus/robotframework-debug for more details.\
             if lib:
                 print_output("< Keywords of library", lib.name)
                 for keyword in get_lib_keywords(lib):
-                    print_output("   {}\t".format(keyword.name), keyword.shortdoc)
+                    print_output(f"   {keyword.name}\t", keyword.shortdoc)
 
     do_k = do_keywords
-
-    def complete_keywords(self, text, line, begin_idx, end_idx):
-        """Complete keywords command."""
-        if len(line.split()) == 2:
-            command, lib_name = line.split()
-            return [lib.name for lib in match_libs(lib_name)]
-        elif len(line.split()) == 1 and line.endswith(" "):
-            return [_.name for _ in get_libs()]
-        return []
-
-    complete_k = complete_keywords
 
     def do_docs(self, keyword_name):
         """Get keyword documentation for individual keywords.
@@ -200,7 +183,7 @@ Access https://github.com/imbus/robotframework-debug for more details.\
             logger.console(keywords[0].doc)
         else:
             print_error(
-                "< found {} keywords".format(len(keywords)), ", ".join([k.name for k in keywords])
+                f"< found {len(keywords)} keywords", ", ".join([k.name for k in keywords])
             )
 
     do_d = do_docs
@@ -208,7 +191,7 @@ Access https://github.com/imbus/robotframework-debug for more details.\
     def emptyline(self):
         """Repeat last nonempty command if in step mode."""
         self.repeat_last_nonempty_command = is_step_mode()
-        return super(DebugCmd, self).emptyline()
+        return super().emptyline()
 
     def append_command(self, command):
         """Append a command to queue."""
@@ -231,12 +214,6 @@ Access https://github.com/imbus/robotframework-debug for more details.\
 
     do_n = do_next
 
-    def do_continue(self, args):
-        """Continue execution."""
-        self.do_exit(args)
-
-    do_c = do_continue
-
     def do_list(self, args):
         """List source code for the current file."""
 
@@ -257,27 +234,30 @@ Access https://github.com/imbus/robotframework-debug for more details.\
             print("Please run `step` or `next` command first.")
             return
 
-        if longlist:
-            print_function = print_test_case_lines
-        else:
-            print_function = print_source_lines
+        print_function = print_test_case_lines if longlist else print_source_lines
 
         try:
             print_function(context.current_source_path, context.current_source_lineno)
-        except RobotNeedUpgrade:
+        except RobotNeedUpgradeError:
             print("Please upgrade robotframework to support list source code:")
             print('    pip install "robotframework>=3.2" -U')
+
+    def do_continue(self, args):
+        """Continue execution."""
+        return self.do_exit(args)
 
     def do_exit(self, args):
         """Exit debug shell."""
         set_step_mode(on=False)  # explicitly exit REPL will disable step mode
         self.append_exit()
-        return super(DebugCmd, self).do_exit(args)
+        return super().do_exit(args)
+
+    do_c = do_continue
 
     def onecmd(self, line):
         # restore last command acrossing different Cmd instances
         self.lastcmd = context.last_command
-        stop = super(DebugCmd, self).onecmd(line)
+        stop = super().onecmd(line)
         context.last_command = self.lastcmd
         return stop
 

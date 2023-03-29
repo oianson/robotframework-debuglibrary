@@ -1,6 +1,6 @@
-import os
 import sys
 import tempfile
+from pathlib import Path
 
 from robot import run_cli
 
@@ -27,7 +27,7 @@ def shell():
         if len(sys.argv) > 1:
             args = sys.argv[1:] + [test_file.name]
         else:
-            args = default_no_logs.split() + [test_file.name]
+            args = [*default_no_logs.split(), test_file.name]
 
         try:
             sys.exit(run_cli(args))
@@ -36,8 +36,9 @@ def shell():
             # pybot will raise PermissionError on Windows NT or later
             # if NamedTemporaryFile called with `delete=True`,
             # deleting test file seperated will be OK.
-            if os.path.exists(test_file.name):
-                os.unlink(test_file.name)
+            file_path = Path(test_file.name)
+            if file_path.exists():
+                file_path.unlink()
 
 
 if __name__ == "__main__":

@@ -1,15 +1,17 @@
+from pathlib import Path
+
 from robot.version import get_version
 
 ROBOT_VERION_RUNNER_GET_STEP_LINENO = "3.2"
 
 
-class RobotNeedUpgrade(Exception):
+class RobotNeedUpgradeError(Exception):
     """Need upgrade robotframework."""
 
 
 def check_version():
     if get_version() < ROBOT_VERION_RUNNER_GET_STEP_LINENO:
-        raise RobotNeedUpgrade
+        raise RobotNeedUpgradeError
 
 
 def print_source_lines(source_file, lineno, before_and_after=5):
@@ -18,7 +20,7 @@ def print_source_lines(source_file, lineno, before_and_after=5):
     if not source_file or not lineno:
         return
 
-    lines = open(source_file).readlines()
+    lines = Path(source_file).open().readlines()
     start_index = max(1, lineno - before_and_after - 1)
     end_index = min(len(lines) + 1, lineno + before_and_after)
     _print_lines(lines, start_index, end_index, lineno)
@@ -30,7 +32,7 @@ def print_test_case_lines(source_file, current_lineno):
     if not source_file or not current_lineno:
         return
 
-    lines = open(source_file).readlines()
+    lines = Path(source_file).open().readlines()
 
     # find the first line of current test case
     start_index = _find_first_lineno(lines, current_lineno)
@@ -76,4 +78,4 @@ def _print_lines(lines, start_index, end_index, current_lineno):
         current_line_sign = ""
         if lineno == current_lineno:
             current_line_sign = "->"
-        print("{:>3} {:2}\t{}".format(lineno, current_line_sign, line.rstrip()))
+        print(f"{lineno:>3} {current_line_sign:2}\t{line.rstrip()}")

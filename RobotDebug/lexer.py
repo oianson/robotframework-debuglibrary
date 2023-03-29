@@ -1,10 +1,8 @@
 import re
-from contextlib import suppress
 
 from pygments.lexer import Lexer
 from pygments.token import Token
-from robot.parsing import get_model, get_tokens
-from robot.parsing.parser.parser import _tokens_to_statements
+from robot.parsing import get_tokens
 
 
 def get_robot_token(text):

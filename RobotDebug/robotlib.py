@@ -1,5 +1,9 @@
 from robot.libdocpkg.model import LibraryDoc
-from robot.libdocpkg.robotbuilder import KeywordDocBuilder, LibraryDocBuilder, ResourceDocBuilder
+from robot.libdocpkg.robotbuilder import (
+    KeywordDocBuilder,
+    LibraryDocBuilder,
+    ResourceDocBuilder,
+)
 from robot.libraries import STDLIBS
 from robot.libraries.BuiltIn import BuiltIn
 

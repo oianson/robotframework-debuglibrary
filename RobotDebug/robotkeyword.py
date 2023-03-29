@@ -98,21 +98,20 @@ def run_command(builtin, command: str) -> List[Tuple[str, str]]:
     assign = set(_get_assignments(test))
     if not assign and return_val is not None:
         return [("<", repr(return_val))]
-    elif assign:
+    if assign:
         output = []  # [("<", repr(return_val))] if return_val is not None else []
         for variable in assign:
-            variable = variable.rstrip("=").strip()
-            val = BuiltIn().get_variable_value(variable)
-            output.append(("#", f"{variable} = {val!r}"))
+            pure_var = variable.rstrip("=").strip()
+            val = BuiltIn().get_variable_value(pure_var)
+            output.append(("#", f"{pure_var} = {val!r}"))
         return output
-    else:
-        return []
+    return []
 
 
 def get_rprompt_text():
     """Get text for bottom toolbar."""
     if last_keyword_exec_time == 0:
-        return
+        return None
     return [("class:pygments.comment", f"# ΔT: {last_keyword_exec_time:.3f}s")]
 
 
@@ -137,7 +136,6 @@ def _import_resource_from_string(command):
     try:
         res_file.write(command)
         res_file.close()
-        global temp_resources
         temp_resources.insert(0, str(resource_path.stem))
         BuiltIn().import_resource(resource_path.resolve().as_posix())
         BuiltIn().set_library_search_order(*temp_resources)

@@ -6,7 +6,7 @@ from robot.parsing.parser.parser import _tokens_to_statements
 
 from .lexer import get_robot_token, get_variable_token
 from .prompttoolkitcmd import set_toolbar_key
-from .robotkeyword import normalize_kw, parse_keyword
+from .robotkeyword import normalize_kw
 from .styles import _get_style_completions
 
 
@@ -143,8 +143,7 @@ class CmdCompleter(Completer):
         elif text.startswith("*"):
             yield from self._get_resource_completions(text.lower())
         elif token:
-            vars = list(get_variable_token([token]))
-            for var in vars:
+            for var in list(get_variable_token([token])):
                 if var.col_offset <= cursor_col <= var.end_col_offset:
                     token = var
                     cursor_pos = cursor_col - var.col_offset

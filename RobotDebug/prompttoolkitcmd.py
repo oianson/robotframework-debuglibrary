@@ -1,6 +1,6 @@
 import cmd
-import os
 import re
+from pathlib import Path
 
 from prompt_toolkit.application import get_app
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
@@ -76,15 +76,14 @@ def _(event):
             b.apply_completion(completion)
         else:
             b.cancel_completion()
+    elif re.fullmatch(r"(FOR|IF|WHILE|TRY|\*\*).*", b.text):
+        b.newline(False)
+    elif b.cursor_position == len(b.text) and re.fullmatch(r".*\n", b.text, re.DOTALL):
+        b.validate_and_handle()
+    elif re.search(r"\n", b.text):
+        b.newline(False)
     else:
-        if re.fullmatch(r"(FOR|IF|WHILE|TRY|\*\*).*", b.text):
-            b.newline(False)
-        elif b.cursor_position == len(b.text) and re.fullmatch(r".*\n", b.text, re.DOTALL):
-            b.validate_and_handle()
-        elif re.search(r"\n", b.text):
-            b.newline(False)
-        else:
-            b.validate_and_handle()
+        b.validate_and_handle()
 
 
 @Condition
@@ -212,11 +211,11 @@ class BaseCmd(cmd.Cmd):
     def emptyline(self):
         """Do not repeat the last command if input empty unless forced to."""
         if self.repeat_last_nonempty_command:
-            return super(BaseCmd, self).emptyline()
+            return super().emptyline()
+        return None
 
     def do_exit(self, arg):
         """Exit the interpreter. You can also use the Ctrl-D shortcut."""
-
         return True
 
     do_EOF = do_exit
@@ -241,7 +240,7 @@ class BaseCmd(cmd.Cmd):
 
     def get_help_string(self, command_name):
         """Get help document of command."""
-        func = getattr(self, "do_{0}".format(command_name), None)
+        func = getattr(self, f"do_{command_name}", None)
         if not func:
             return ""
         return func.__doc__
@@ -259,17 +258,16 @@ class BaseCmd(cmd.Cmd):
     def _get_input(self):
         if self.cmdqueue:
             return self.cmdqueue.pop(0)
-        else:
-            try:
-                return self.get_input()
-            except KeyboardInterrupt:
-                return
+        try:
+            return self.get_input()
+        except KeyboardInterrupt:
+            return None
 
     def loop_once(self):
         self.pre_loop_iter()
         line = self._get_input()
         if line is None:
-            return
+            return None
 
         if line == "exit":
             line = "EOF"
@@ -320,8 +318,8 @@ Type "help" for more information.\
 """
 
     def __init__(self, completekey="tab", stdin=None, stdout=None, history_path=""):
-        BaseCmd.__init__(self, completekey, stdin, stdout)
-        self.history = FileHistory(os.path.expanduser(history_path))
+        super().__init__(completekey, stdin, stdout)
+        self.history = FileHistory(str(Path(history_path).expanduser()))
 
     def prompt_continuation(self, width, line_number, is_soft_wrap):
         return " " * width
