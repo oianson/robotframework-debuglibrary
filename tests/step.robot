@@ -3,7 +3,9 @@ Library     RobotDebug
 
 *** Test Cases ***
 test1
+    ${var} =    Set Variable    hello
     debug
+    ${var2}    ${var3} =    Set Variable    1    2
     High    hello    world
     High    Next     High
     log to console  working

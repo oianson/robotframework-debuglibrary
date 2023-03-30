@@ -65,6 +65,10 @@ class Listener:
             print_output(self.errormessage.get("level", ""), self.errormessage.get("message", ""), style=ERROR_STYLE)
             self.library.debug()
             self.new_error = False
+        if is_step_mode():
+            for var_name in attrs.get("assign", []):
+                val = BuiltIn().get_variable_value(var_name)
+                print_output("#", f"{var_name} = {val!r}")
 
 
 class RobotDebug:
