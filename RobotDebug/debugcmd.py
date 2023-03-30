@@ -1,6 +1,7 @@
 import difflib
 import os
 import time
+from enum import Enum
 from typing import List, Tuple
 
 from prompt_toolkit.shortcuts import clear
@@ -42,6 +43,14 @@ from .styles import (
 HISTORY_PATH = os.environ.get("RFDEBUG_HISTORY", "~/.rfdebug_history")
 
 
+class StepMode(str, Enum):
+    INTO = "INTO"
+    OVER = "OVER"
+    OUT = "OUT"
+    CONTINUE = "CONTINUE"
+    STOP = "STOP"
+
+
 class DebugCmd(PromptToolkitCmd):
     """Interactive debug shell for robotframework."""
 
@@ -50,6 +59,7 @@ class DebugCmd(PromptToolkitCmd):
     def __init__(self, library):
         super().__init__(library, history_path=HISTORY_PATH)
         self.last_keyword_exec_time = 0
+        self.listener = self.library.cli_listener or self.library.ROBOT_LIBRARY_LISTENER
 
     def get_prompt_tokens(self, prompt_text):
         return get_debug_prompt_tokens(prompt_text)
@@ -213,6 +223,26 @@ Access https://github.com/imbus/robotframework-debug for more details.\
     def append_exit(self):
         """Append exit command to queue."""
         self.append_command("exit")
+
+    def do_OVER(self, args):  # noqa: N802
+        """Step Over."""
+        self.listener.step_mode = StepMode.OVER
+        return True
+
+    def do_INTO(self, args):  # noqa: N802
+        """Step Over."""
+        self.listener.step_mode = StepMode.INTO
+        return True
+
+    def do_OUT(self, args):  # noqa: N802
+        """Step Over."""
+        self.listener.step_mode = StepMode.OUT
+        return True
+
+    def do_CONTINUE(self, args):  # noqa: N802
+        """Step Over."""
+        self.listener.step_mode = StepMode.CONTINUE
+        return True
 
     def do_step(self, args):
         """Execute the current line, stop at the first possible occasion."""

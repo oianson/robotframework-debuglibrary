@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from enum import Enum
 from pathlib import Path
 
 from robot.libraries.BuiltIn import BuiltIn
@@ -18,20 +19,32 @@ MUTING_KEYWORDS = [
 ]
 
 
+class StepMode(str, Enum):
+    INTO = "INTO"
+    OVER = "OVER"
+    OUT = "OUT"
+    CONTINUE = "CONTINUE"
+    STOP = "STOP"
+
+
 class Listener:
     ROBOT_LISTENER_API_VERSION = 2
-    instance = None
+    instance: Listener = None
 
     def __init__(self, library: RobotDebug = None, is_library: bool = False):
         Listener.instance = self
-        self.library = library or RobotDebug(cli_listener=True)
+        self.library = library or RobotDebug(cli_listener=self)
         self.source_files = {}
         self.new_error = True
         self.errormessage = {}
         self.mutings = []
         self.is_library = is_library
+        self.keyword_layer = 0
+        self.last_keyword_layer = 1
+        self.step_mode: StepMode = StepMode.CONTINUE
 
     def start_keyword(self, name, attrs):
+        self.keyword_layer += 1
         if attrs["kwname"] in MUTING_KEYWORDS:
             self.mutings.append(attrs["kwname"])
 
@@ -42,8 +55,13 @@ class Listener:
         self.library.current_source_path = path
         self.library.current_source_line = lineno
 
-        if not is_step_mode():
+        if (
+            self.step_mode == StepMode.CONTINUE
+            or (self.step_mode == StepMode.OVER and self.last_keyword_layer < self.keyword_layer)
+            or (self.step_mode == StepMode.OUT and self.last_keyword_layer <= self.keyword_layer)
+        ):
             return
+        self.last_keyword_layer = self.keyword_layer
 
         print_output("> ", f"{path}:{lineno}", style=LOW_VISIBILITY_STYLE)
         line = self.source_files[path][lineno - 1]
@@ -57,6 +75,7 @@ class Listener:
             self.errormessage = message
 
     def end_keyword(self, name, attrs):
+        self.keyword_layer -= 1
         if attrs["status"] == "PASS":
             self.new_error = True
         if self.mutings and attrs["kwname"] == self.mutings[-1]:
@@ -94,11 +113,11 @@ class RobotDebug:
         return cls._instance
 
     def __init__(self, **kwargs):
-        self.is_cli_listener = kwargs.get("cli_listener", False)
-        if not self.is_cli_listener and not Listener.instance:
+        self.cli_listener = kwargs.get("cli_listener", False)
+        if not self.cli_listener and not Listener.instance:
             self.ROBOT_LIBRARY_LISTENER = Listener(self, is_library=True)
         self.show_intro = True
-        self.debug_cmd = None
+        self.debug_cmd = DebugCmd(self)
         self.is_repl = kwargs.get("repl", False)
         self.current_source_line = 0
         self.current_source_path = ""
@@ -124,11 +143,9 @@ class RobotDebug:
         try:
             if not is_step_mode():
                 print_output(">>>>>", "Enter interactive shell")
-
-            self.debug_cmd = DebugCmd(self)
             if self.show_intro:
                 self.show_intro = False
-                if self.is_cli_listener:
+                if self.cli_listener:
                     print_output(
                         "File: ",
                         str(Path(self.current_source_path).relative_to(Path.cwd())) or "unknown",

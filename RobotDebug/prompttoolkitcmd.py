@@ -172,13 +172,46 @@ def _(event):
     b.insert_text("]", move_cursor=False)
 
 
-MOUSE_SUPPORT = True
+@kb.add("f8")
+def _(event):
+    b = event.current_buffer
+    b.text = "OVER"
+    b.validate_and_handle()
+
+
+@kb.add("f7")
+def _(event):
+    b = event.current_buffer
+    b.text = "INTO"
+    b.validate_and_handle()
+
+
+@kb.add("f9")
+def _(event):
+    b = event.current_buffer
+    b.text = "OUT"
+    b.validate_and_handle()
+
+
+@kb.add("f10")
+def _(event):
+    b = event.current_buffer
+    b.text = "CONTINUE"
+    b.validate_and_handle()
+
+
+MOUSE_MODE = True
 
 
 @kb.add("f12")
 def _(event):
-    global MOUSE_SUPPORT
-    MOUSE_SUPPORT = not MOUSE_SUPPORT
+    global MOUSE_MODE
+    MOUSE_MODE = not MOUSE_MODE
+    b = event.current_buffer
+    b.text = ""
+    b.validate_and_handle()
+
+
 
 
 TOOLBAR_KEY = ("", None, None)
@@ -191,6 +224,16 @@ def set_toolbar_key(statement_type, token, cursor_pos):
 
 def bottom_toolbar():
     return [
+        ("class:bottom-toolbar-key", "F7: "),
+        ("class:bottom-toolbar", "INTO    "),
+        ("class:bottom-toolbar-key", "F8: "),
+        ("class:bottom-toolbar", "OVER    "),
+        ("class:bottom-toolbar-key", "F9: "),
+        ("class:bottom-toolbar", "OUT    "),
+        ("class:bottom-toolbar-key", "F10: "),
+        ("class:bottom-toolbar", "CONTINUE    "),
+        ("class:bottom-toolbar-key", "F12: "),
+        ("class:bottom-toolbar", f"Toggle Mouse ({'ON' if MOUSE_MODE else 'OFF'})    "),
         ("class:bottom-toolbar-key", "STATEMENT: "),
         ("class:bottom-toolbar", f"{TOOLBAR_KEY[0]}    "),
         ("class:bottom-toolbar-key", "value: "),
@@ -338,7 +381,7 @@ Type "help" for more information.\
                 key_bindings=kb,
                 lexer=PygmentsLexer(RobotFrameworkLocalLexer),
                 message=prompt_str,
-                mouse_support=MOUSE_SUPPORT,
+                mouse_support=MOUSE_MODE,
                 prompt_continuation=self.prompt_continuation,
                 rprompt=self.get_rprompt_text(),
                 **kwargs,

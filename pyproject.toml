@@ -9,7 +9,6 @@ exclude = [
 ]
 ignore = [
   "B008",  # do not perform function calls in argument defaults
-  "B904",  # TODO only temporary. should be fixed.
   "E501",  # line too long
   "N815",  # mixedCase variable in class scope
   "N803",  # argument name should be lowercase
