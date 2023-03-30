@@ -194,9 +194,15 @@ def bottom_toolbar():
         ("class:bottom-toolbar-key", "STATEMENT: "),
         ("class:bottom-toolbar", f"{TOOLBAR_KEY[0]}    "),
         ("class:bottom-toolbar-key", "value: "),
-        ("class:bottom-toolbar", f"{TOOLBAR_KEY[1].value if TOOLBAR_KEY[1] else ''}    "),
+        (
+            "class:bottom-toolbar",
+            f"{TOOLBAR_KEY[1].value if TOOLBAR_KEY[1] else ''}    ",
+        ),
         ("class:bottom-toolbar-key", "TOKEN: "),
-        ("class:bottom-toolbar", f"{TOOLBAR_KEY[1].type if TOOLBAR_KEY[1] else ''}    "),
+        (
+            "class:bottom-toolbar",
+            f"{TOOLBAR_KEY[1].type if TOOLBAR_KEY[1] else ''}    ",
+        ),
         ("class:bottom-toolbar-key", "TOKEN: "),
         ("class:bottom-toolbar", f"{TOOLBAR_KEY[2] if TOOLBAR_KEY[2] else ''}    "),
     ]

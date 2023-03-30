@@ -65,20 +65,22 @@ class DebugCmd(PromptToolkitCmd):
     def do_help(self, arg):
         """Show help message."""
         if not arg.strip():
-            print_output("", """\
+            print_output(
+                "",
+                """\
 Input Robotframework keywords, or commands listed below.
 Use "libs" or "l" to see available libraries,
 use "keywords" or "k" see the list of library keywords,
 use the TAB keyboard key to autocomplete keywords.
 Access https://github.com/imbus/robotframework-debug for more details.\
-""")
+""",
+            )
         super().do_help(arg)
 
     def get_completer(self):
         """Get completer instance specified for robotframework."""
         commands = [
-            (cmd_name, cmd_name, f"DEBUG command: {doc}")
-            for cmd_name, doc in self.get_helps()
+            (cmd_name, cmd_name, f"DEBUG command: {doc}") for cmd_name, doc in self.get_helps()
         ]
 
         for lib in get_libs():
@@ -100,7 +102,11 @@ Access https://github.com/imbus/robotframework-debug for more details.\
                 )
             )
             commands.append(
-                (keyword.name, keyword.name, f"{keyword.shortdoc} [{keyword.parent.name}]")
+                (
+                    keyword.name,
+                    keyword.name,
+                    f"{keyword.shortdoc} [{keyword.parent.name}]",
+                )
             )
 
         return CmdCompleter(commands, self)
@@ -139,7 +145,7 @@ Access https://github.com/imbus/robotframework-debug for more details.\
     def _print_lib_info(self, lib, with_source_path=False):
         print_output(f"   {lib.name}", lib.version if hasattr(lib, "version") else "")
         if lib.doc:
-            doc = lib.doc.split('\n')[0]
+            doc = lib.doc.split("\n")[0]
             logger.console(f"       {doc}")
         if with_source_path:
             logger.console(f"       {lib.source}")
@@ -189,7 +195,8 @@ Access https://github.com/imbus/robotframework-debug for more details.\
             logger.console(keywords[0].doc)
         else:
             print_error(
-                f"< found {len(keywords)} keywords", ", ".join([k.name for k in keywords])
+                f"< found {len(keywords)} keywords",
+                ", ".join([k.name for k in keywords]),
             )
 
     do_d = do_docs
@@ -241,7 +248,11 @@ Access https://github.com/imbus/robotframework-debug for more details.\
         #     return
 
         print_function = print_test_case_lines if longlist else print_source_lines
-        print_function(self.library.current_source_path, self.library.current_source_line)
+        print_function(
+            self.prompt_style,
+            self.library.current_source_path,
+            self.library.current_source_line,
+        )
 
     def do_continue(self, args):
         """Continue execution."""

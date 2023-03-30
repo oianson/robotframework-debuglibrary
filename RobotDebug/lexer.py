@@ -1,8 +1,13 @@
 import re
+from pathlib import Path
 
 from pygments.lexer import Lexer
 from pygments.token import Token
 from robot.parsing import get_tokens
+
+
+def get_robot_token_from_file(file: Path):
+    return list(get_tokens(file))
 
 
 def get_robot_token(text):
@@ -143,6 +148,8 @@ class RobotFrameworkLocalLexer(Lexer):
     # }
 
     ROBOT_TO_PYGMENTS = {
+        "HEADER": Token.Keyword.Namespace,
+        "DEFINITION": Token.Name.Class,
         "SETTING HEADER": Token.Keyword.Namespace,
         "VARIABLE HEADER": Token.Keyword.Namespace,
         "TESTCASE HEADER": Token.Keyword.Namespace,
@@ -242,6 +249,10 @@ class RobotFrameworkLocalLexer(Lexer):
         for v_token in get_variable_token(token_list):
             yield index, self.to_pygments_token_type(v_token), v_token.value
             index += len(v_token.value)
+
+    def get_pygments_token(self, token):
+        for v_token in get_variable_token(token):
+            yield self.to_pygments_token_type(v_token), v_token.value
 
     def to_pygments_token_type(self, token):
         if token.type == "VARIABLE":

@@ -10,7 +10,9 @@ ROOT = os.path.abspath(os.path.dirname(__file__))
 
 
 def read(*names, **kwargs):
-    with io.open(os.path.join(ROOT, *names), encoding=kwargs.get("encoding", "utf8")) as fp:
+    with io.open(
+        os.path.join(ROOT, *names), encoding=kwargs.get("encoding", "utf8")
+    ) as fp:
         return fp.read()
 
 

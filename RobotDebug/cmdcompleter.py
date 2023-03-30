@@ -64,12 +64,9 @@ class CmdCompleter(Completer):
             )
             for name in self.names
             if (
-                (
-                    ("." not in name and "." not in text)  # root level
-                    or ("." in name and "." in text)
-                )  # library level
+                (("." not in name and "." not in text) or ("." in name and "." in text))
                 and normalize_kw(name).startswith(normalize_kw(content))
-            )
+            )  # root level  # library level
         )
 
     def _get_resource_completions(self, text):

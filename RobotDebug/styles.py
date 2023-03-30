@@ -1,6 +1,6 @@
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.completion import Completion
-from prompt_toolkit.formatted_text import FormattedText
+from prompt_toolkit.formatted_text import FormattedText, PygmentsTokens
 from prompt_toolkit.styles import Style, merge_styles, style_from_pygments_cls
 from pygments.styles import get_all_styles, get_style_by_name
 
@@ -43,6 +43,10 @@ DEBUG_PROMPT_STYLE = merge_styles(
 def get_pygments_styles():
     """Get all pygments styles."""
     return list(get_all_styles())
+
+
+def print_pygments_styles(token, style=DEBUG_PROMPT_STYLE):
+    print_formatted_text(PygmentsTokens(token), style=style)
 
 
 def print_output(head, message, style=NORMAL_STYLE):

@@ -17,7 +17,19 @@ Robot Framework Debug REPL
 def shell():
     """A standalone robotframework shell."""
 
-    default_no_logs = ["-l", "None", "-x", "None", "-o", "None", "-L", "None", "-r", "None", "--quiet"]
+    default_no_logs = [
+        "-l",
+        "None",
+        "-x",
+        "None",
+        "-o",
+        "None",
+        "-L",
+        "None",
+        "-r",
+        "None",
+        "--quiet",
+    ]
 
     with tempfile.NamedTemporaryFile(
         prefix="robot-debug-", suffix=".robot", delete=False

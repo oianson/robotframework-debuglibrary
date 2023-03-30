@@ -32,10 +32,8 @@ class Listener:
         self.is_library = is_library
 
     def start_keyword(self, name, attrs):
-
         if attrs["kwname"] in MUTING_KEYWORDS:
             self.mutings.append(attrs["kwname"])
-        self.new_error = True
 
         path = attrs["source"]
         if path and path not in self.source_files:
@@ -59,10 +57,22 @@ class Listener:
             self.errormessage = message
 
     def end_keyword(self, name, attrs):
+        if attrs["status"] == "PASS":
+            self.new_error = True
         if self.mutings and attrs["kwname"] == self.mutings[-1]:
             self.mutings.pop()
-        if attrs["status"] == "FAIL" and self.new_error and not self.mutings and not self.is_library:
-            print_output(self.errormessage.get("level", ""), self.errormessage.get("message", ""), style=ERROR_STYLE)
+        if (
+            attrs["status"] == "FAIL"
+            and self.new_error
+            and not self.mutings
+            and not self.is_library
+        ):
+            print_output(
+                self.errormessage.get("level", ""),
+                self.errormessage.get("message", ""),
+                style=ERROR_STYLE,
+            )
+            self.library.show_intro = True
             self.library.debug()
             self.new_error = False
         if is_step_mode():
@@ -113,13 +123,17 @@ class RobotDebug:
         sys.stdout = sys.__stdout__
         try:
             if not is_step_mode():
-                print_output("\n>>>>>", "Enter interactive shell")
+                print_output(">>>>>", "Enter interactive shell")
 
             self.debug_cmd = DebugCmd(self)
             if self.show_intro:
                 self.show_intro = False
                 if self.is_cli_listener:
-                    self.debug_cmd.do_list("")
+                    print_output(
+                        "File: ",
+                        str(Path(self.current_source_path).relative_to(Path.cwd())) or "unknown",
+                    )
+                    self.debug_cmd.do_longlist("")
                     intro = "Execution interrupted by RobotDebug. Type 'help' for more information."
                 else:
                     intro = None

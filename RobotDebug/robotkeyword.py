@@ -84,7 +84,11 @@ Fake Test
 
 def _import_resource_from_string(command):
     res_file = tempfile.NamedTemporaryFile(
-        mode="w", prefix="RobotDebug_keywords_", suffix=".resource", encoding="utf-8", delete=False
+        mode="w",
+        prefix="RobotDebug_keywords_",
+        suffix=".resource",
+        encoding="utf-8",
+        delete=False,
     )
     resource_path = Path(res_file.name)
     try:
