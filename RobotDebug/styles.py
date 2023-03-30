@@ -6,8 +6,15 @@ from pygments.styles import get_all_styles, get_style_by_name
 
 NORMAL_STYLE = Style.from_dict(
     {
-        "head": "fg:green",
+        "head": "fg:blue",
         "message": "fg:silver",
+    }
+)
+
+LOW_VISIBILITY_STYLE = Style.from_dict(
+    {
+        "head": "fg:blue",
+        "message": "fg:#333333",
     }
 )
 
@@ -18,7 +25,6 @@ BASE_STYLE = Style.from_dict(
     {
         "pygments.name.function": "bold",
         "pygments.literal.string": "italic",
-        # "pygments.name.variable.instance": "italic",
         "pygments.name.class": "underline",
         "bottom-toolbar": "#333333 bg:#ffffff",
         "bottom-toolbar-key": "#333333 bg:#aaaaff",

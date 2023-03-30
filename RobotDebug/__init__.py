@@ -1,11 +1,4 @@
-from .keywords import DebugKeywords
-from .version import VERSION
+from .RobotDebug import Listener, RobotDebug  # noqa: F401
+from .version import VERSION  # noqa: F401
 
 """A debug library and REPL for RobotFramework."""
-
-
-class RobotDebug(DebugKeywords):
-    """Debug Library for RobotFramework."""
-
-    ROBOT_LIBRARY_SCOPE = "GLOBAL"
-    ROBOT_LIBRARY_VERSION = VERSION

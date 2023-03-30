@@ -14,8 +14,8 @@ from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.output import ColorDepth
 from prompt_toolkit.shortcuts import CompleteStyle, prompt
 
+from . import RobotDebug
 from .lexer import RobotFrameworkLocalLexer
-from .robotkeyword import get_rprompt_text
 
 kb = KeyBindings()
 
@@ -220,18 +220,6 @@ class BaseCmd(cmd.Cmd):
 
     do_EOF = do_exit
 
-    def help_help(self):
-        """Help of Help command"""
-
-        print("Show help message.")
-
-    def do_pdb(self, arg):
-        """Enter the python debuger pdb. For development only."""
-        print("break into python debugger: pdb")
-        import pdb
-
-        pdb.set_trace()
-
     def get_cmd_names(self):
         """Get all command names of CMD shell."""
         pre = "do_"
@@ -272,14 +260,8 @@ class BaseCmd(cmd.Cmd):
         if line == "exit":
             line = "EOF"
 
-        line = self.precmd(line)
-        if line == "EOF":
-            # do not run 'EOF' command to avoid override 'lastcmd'
-            stop = True
-        else:
-            stop = self.onecmd(line)
-        stop = self.postcmd(stop, line)
-        return stop
+        # do not run 'EOF' command to avoid override 'lastcmd'
+        return True if line == "EOF" else self.onecmd(line)
 
     def cmdloop(self, intro=None):
         """Better command loop.
@@ -317,12 +299,16 @@ and resource file syntax like *** Keywords*** or *** Variables ***.
 Type "help" for more information.\
 """
 
-    def __init__(self, completekey="tab", stdin=None, stdout=None, history_path=""):
-        super().__init__(completekey, stdin, stdout)
+    def __init__(self, library, history_path=""):
+        super().__init__()
+        self.library: RobotDebug = library
         self.history = FileHistory(str(Path(history_path).expanduser()))
 
     def prompt_continuation(self, width, line_number, is_soft_wrap):
         return " " * width
+
+    def get_rprompt_text(self):
+        return [("class:pygments.comment", "rprompt")]
 
     def get_input(self):
         kwargs = {}
@@ -348,7 +334,7 @@ Type "help" for more information.\
                 message=prompt_str,
                 mouse_support=MOUSE_SUPPORT,
                 prompt_continuation=self.prompt_continuation,
-                rprompt=get_rprompt_text(),
+                rprompt=self.get_rprompt_text(),
                 **kwargs,
             )
         except EOFError:

@@ -1,22 +1,9 @@
 from pathlib import Path
 
-from robot.version import get_version
-
-ROBOT_VERION_RUNNER_GET_STEP_LINENO = "3.2"
-
-
-class RobotNeedUpgradeError(Exception):
-    """Need upgrade robotframework."""
-
-
-def check_version():
-    if get_version() < ROBOT_VERION_RUNNER_GET_STEP_LINENO:
-        raise RobotNeedUpgradeError
+from RobotDebug.styles import print_output
 
 
 def print_source_lines(source_file, lineno, before_and_after=5):
-    check_version()
-
     if not source_file or not lineno:
         return
 
@@ -27,7 +14,6 @@ def print_source_lines(source_file, lineno, before_and_after=5):
 
 
 def print_test_case_lines(source_file, current_lineno):
-    check_version()
 
     if not source_file or not current_lineno:
         return
@@ -78,4 +64,4 @@ def _print_lines(lines, start_index, end_index, current_lineno):
         current_line_sign = ""
         if lineno == current_lineno:
             current_line_sign = "->"
-        print(f"{lineno:>3} {current_line_sign:2}\t{line.rstrip()}")
+        print_output(f"{lineno:>3} {current_line_sign:2}\t", f"{line.rstrip()}")

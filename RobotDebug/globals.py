@@ -1,9 +1,5 @@
 class SingletonContext:
     in_step_mode = False
-    current_runner = None
-    current_runner_step = None
-    current_source_path = ""
-    current_source_lineno = 0
     last_command = ""
 
     def __new__(cls):

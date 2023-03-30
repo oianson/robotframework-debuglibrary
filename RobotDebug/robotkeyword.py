@@ -1,6 +1,5 @@
 import re
 import tempfile
-import time
 from pathlib import Path
 from typing import Iterator, List, Tuple
 
@@ -17,7 +16,6 @@ KEYWORD_SEP = re.compile("  +|\t")
 _lib_keywords_cache = {}
 _resource_keywords_cache = {}
 temp_resources = []
-last_keyword_exec_time = 0
 
 
 def parse_keyword(command) -> Tuple[List[str], str, List[str]]:
@@ -69,50 +67,6 @@ def find_keyword(keyword_name) -> List[KeywordDoc]:
 
 def normalize_kw(keyword_name):
     return keyword_name.lower().replace("_", "").replace(" ", "")
-
-
-def run_command(builtin, command: str) -> List[Tuple[str, str]]:
-    """Run a command in robotframewrk environment."""
-    global last_keyword_exec_time
-    last_keyword_exec_time = 0
-    if not command:
-        return []
-    if is_variable(command):
-        return [("#", f"{command} = {builtin.get_variable_value(command)!r}")]
-    ctx = BuiltIn()._get_context()
-    if command.startswith("***"):
-        _import_resource_from_string(command)
-        return []
-    test = get_test_body_from_string(command)
-    if len(test.body) > 1:
-        start = time.monotonic()
-        for kw in test.body:
-            kw.run(ctx)
-        last_keyword_exec_time = time.monotonic() - start
-        return_val = None
-    else:
-        kw = test.body[0]
-        start = time.monotonic()
-        return_val = kw.run(ctx)
-        last_keyword_exec_time = time.monotonic() - start
-    assign = set(_get_assignments(test))
-    if not assign and return_val is not None:
-        return [("<", repr(return_val))]
-    if assign:
-        output = []  # [("<", repr(return_val))] if return_val is not None else []
-        for variable in assign:
-            pure_var = variable.rstrip("=").strip()
-            val = BuiltIn().get_variable_value(pure_var)
-            output.append(("#", f"{pure_var} = {val!r}"))
-        return output
-    return []
-
-
-def get_rprompt_text():
-    """Get text for bottom toolbar."""
-    if last_keyword_exec_time == 0:
-        return None
-    return [("class:pygments.comment", f"# ΔT: {last_keyword_exec_time:.3f}s")]
 
 
 def get_test_body_from_string(command):

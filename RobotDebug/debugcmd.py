@@ -1,26 +1,32 @@
 import difflib
 import os
-from typing import List
+import time
+from typing import List, Tuple
 
 from prompt_toolkit.shortcuts import clear
 from prompt_toolkit.styles import merge_styles
 from robot.api import logger
 from robot.errors import ExecutionFailed, HandlerExecutionFailed
-from robot.libdocpkg.model import KeywordDoc
 from robot.libraries.BuiltIn import BuiltIn
 from robot.running.signalhandler import STOP_SIGNAL_MONITOR
+from robot.variables import is_variable
 
 from .cmdcompleter import CmdCompleter
 from .globals import context
 from .prompttoolkitcmd import PromptToolkitCmd
-from .robotkeyword import find_keyword, get_keywords, get_lib_keywords, run_command
+from .robotkeyword import (
+    _get_assignments,
+    _import_resource_from_string,
+    find_keyword,
+    get_keywords,
+    get_lib_keywords,
+    get_test_body_from_string,
+)
 from .robotlib import get_builtin_libs, get_libs, match_libs
 from .sourcelines import (
-    RobotNeedUpgradeError,
     print_source_lines,
     print_test_case_lines,
 )
-from .steplistener import is_step_mode, set_step_mode
 from .styles import (
     BASE_STYLE,
     DEBUG_PROMPT_STYLE,
@@ -36,36 +42,14 @@ from .styles import (
 HISTORY_PATH = os.environ.get("RFDEBUG_HISTORY", "~/.rfdebug_history")
 
 
-def run_robot_command(robot_instance, command):
-    """Run command in robotframewrk environment."""
-    if not command:
-        return
-
-    result = []
-    try:
-        result = run_command(robot_instance, command)
-    except HandlerExecutionFailed as exc:
-        print_error("! FAIL:", exc.message)
-    except ExecutionFailed as exc:
-        print_error("! Expression:", command if "\n" not in command else f"\n{command}")
-        print_error("! Execution error:", str(exc))
-    except Exception as exc:
-        print_error("! Expression:", command)
-        print_error("! Error:", repr(exc))
-
-    if result:
-        for head, message in result:
-            print_output(head, message)
-
-
 class DebugCmd(PromptToolkitCmd):
     """Interactive debug shell for robotframework."""
 
     prompt_style = DEBUG_PROMPT_STYLE
 
-    def __init__(self, completekey="tab", stdin=None, stdout=None):
-        super().__init__(completekey, stdin, stdout, history_path=HISTORY_PATH)
-        self.robot = BuiltIn()
+    def __init__(self, library):
+        super().__init__(library, history_path=HISTORY_PATH)
+        self.last_keyword_exec_time = 0
 
     def get_prompt_tokens(self, prompt_text):
         return get_debug_prompt_tokens(prompt_text)
@@ -81,15 +65,13 @@ class DebugCmd(PromptToolkitCmd):
     def do_help(self, arg):
         """Show help message."""
         if not arg.strip():
-            print(
-                """\
+            print_output("", """\
 Input Robotframework keywords, or commands listed below.
 Use "libs" or "l" to see available libraries,
 use "keywords" or "k" see the list of library keywords,
 use the TAB keyboard key to autocomplete keywords.
 Access https://github.com/imbus/robotframework-debug for more details.\
-"""
-            )
+""")
         super().do_help(arg)
 
     def get_completer(self):
@@ -108,8 +90,7 @@ Access https://github.com/imbus/robotframework-debug for more details.\
                 )
             )
 
-        keywords: List[KeywordDoc] = get_keywords()
-        for keyword in keywords:
+        for keyword in get_keywords():
             name = f"{keyword.parent.name}.{keyword.name}"
             commands.append(
                 (
@@ -128,7 +109,32 @@ Access https://github.com/imbus/robotframework-debug for more details.\
         """Run RobotFramework keywords."""
         command = line.strip()
 
-        run_robot_command(self.robot, command)
+        self.run_robot_command(command)
+
+    def run_robot_command(self, command):
+        """Run command in robotframewrk environment."""
+        if not command:
+            return
+        result = []
+        try:
+            result = run_command(self, command)
+        except HandlerExecutionFailed as exc:
+            print_error("! FAIL:", exc.message)
+        except ExecutionFailed as exc:
+            print_error("! Expression:", command if "\n" not in command else f"\n{command}")
+            print_error("! Execution error:", str(exc))
+        except Exception as exc:
+            print_error("! Expression:", command)
+            print_error("! Error:", repr(exc))
+        if result:
+            for head, message in result:
+                print_output(head, message)
+
+    def get_rprompt_text(self):
+        """Get text for bottom toolbar."""
+        if self.last_keyword_exec_time == 0:
+            return None
+        return [("class:pygments.comment", f"# ΔT: {self.last_keyword_exec_time:.3f}s")]
 
     def _print_lib_info(self, lib, with_source_path=False):
         print_output(f"   {lib.name}", lib.version if hasattr(lib, "version") else "")
@@ -221,7 +227,7 @@ Access https://github.com/imbus/robotframework-debug for more details.\
 
     do_l = do_list
 
-    def do_longlist(self, args):
+    def do_longlist(self, args=None):
         """List the whole source code for the current test case."""
 
         self.list_source(longlist=True)
@@ -230,17 +236,12 @@ Access https://github.com/imbus/robotframework-debug for more details.\
 
     def list_source(self, longlist=False):
         """List source code."""
-        if not is_step_mode():
-            print("Please run `step` or `next` command first.")
-            return
+        # if not is_step_mode():
+        #     print_output("i:", "Please run `step` or `next` command first.")
+        #     return
 
         print_function = print_test_case_lines if longlist else print_source_lines
-
-        try:
-            print_function(context.current_source_path, context.current_source_lineno)
-        except RobotNeedUpgradeError:
-            print("Please upgrade robotframework to support list source code:")
-            print('    pip install "robotframework>=3.2" -U')
+        print_function(self.library.current_source_path, self.library.current_source_line)
 
     def do_continue(self, args):
         """Continue execution."""
@@ -287,3 +288,47 @@ def reset_robotframework_exception():
         STOP_SIGNAL_MONITOR._signal_count = 0
         STOP_SIGNAL_MONITOR._running_keyword = True
         logger.info("Reset last exception of DebugLibrary")
+
+
+def set_step_mode(on=True):
+    context.in_step_mode = on
+
+
+def is_step_mode():
+    return context.in_step_mode
+
+
+def run_command(dbg_cmd, command: str) -> List[Tuple[str, str]]:
+    """Run a command in robotframewrk environment."""
+    dbg_cmd.last_keyword_exec_time = 0
+    if not command:
+        return []
+    if is_variable(command):
+        return [("#", f"{command} = {BuiltIn().get_variable_value(command)!r}")]
+    ctx = BuiltIn()._get_context()
+    if command.startswith("***"):
+        _import_resource_from_string(command)
+        return [("i:", "Resource imported.")]
+    test = get_test_body_from_string(command)
+    if len(test.body) > 1:
+        start = time.monotonic()
+        for kw in test.body:
+            kw.run(ctx)
+        dbg_cmd.last_keyword_exec_time = time.monotonic() - start
+        return_val = None
+    else:
+        kw = test.body[0]
+        start = time.monotonic()
+        return_val = kw.run(ctx)
+        dbg_cmd.last_keyword_exec_time = time.monotonic() - start
+    assign = set(_get_assignments(test))
+    if not assign and return_val is not None:
+        return [("<", repr(return_val))]
+    if assign:
+        output = []  # [("<", repr(return_val))] if return_val is not None else []
+        for variable in assign:
+            pure_var = variable.rstrip("=").strip()
+            val = BuiltIn().get_variable_value(pure_var)
+            output.append(("#", f"{pure_var} = {val!r}"))
+        return output
+    return []

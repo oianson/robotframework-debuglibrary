@@ -4,8 +4,9 @@ from pathlib import Path
 
 from robot import run_cli
 
-TEST_SUITE = b"""*** Settings ***
-Library  RobotDebug
+TEST_SUITE = b"""
+*** Settings ***
+Library    RobotDebug   repl=${True}
 
 *** Test Cases ***
 Robot Framework Debug REPL
@@ -16,7 +17,7 @@ Robot Framework Debug REPL
 def shell():
     """A standalone robotframework shell."""
 
-    default_no_logs = "-l None -x None -o None -L None -r None"
+    default_no_logs = ["-l", "None", "-x", "None", "-o", "None", "-L", "None", "-r", "None", "--quiet"]
 
     with tempfile.NamedTemporaryFile(
         prefix="robot-debug-", suffix=".robot", delete=False
@@ -27,7 +28,7 @@ def shell():
         if len(sys.argv) > 1:
             args = sys.argv[1:] + [test_file.name]
         else:
-            args = [*default_no_logs.split(), test_file.name]
+            args = [*default_no_logs, test_file.name]
 
         try:
             sys.exit(run_cli(args))
