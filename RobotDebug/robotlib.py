@@ -15,12 +15,20 @@ def get_builtin_libs():
 
 def get_libs():
     """Get imported robotframework library names."""
-    libs = [
-        lib for lib in BuiltIn()._namespace._kw_store.libraries.values() if lib.name != "Reserved"
-    ]
-    resources = BuiltIn()._namespace._kw_store.resources._items
+    libs = get_libraries()
+    resources = get_resources()
     libs.extend(resources)
     return sorted(libs, key=lambda _: _.name)
+
+
+def get_libraries():
+    return [
+        lib for lib in BuiltIn()._namespace._kw_store.libraries.values() if lib.name != "Reserved"
+    ]
+
+
+def get_resources():
+    return BuiltIn()._namespace._kw_store.resources._items
 
 
 def match_libs(name=""):

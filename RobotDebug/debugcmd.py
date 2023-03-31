@@ -1,7 +1,6 @@
 import difflib
 import os
 import time
-from enum import Enum
 from typing import List, Tuple
 
 from prompt_toolkit.shortcuts import clear
@@ -23,7 +22,12 @@ from .robotkeyword import (
     get_lib_keywords,
     get_test_body_from_string,
 )
-from .robotlib import get_builtin_libs, get_libs, match_libs
+from .robotlib import (
+    get_libraries,
+    get_libs,
+    get_resources,
+    match_libs,
+)
 from .sourcelines import (
     print_source_lines,
     print_test_case_lines,
@@ -43,15 +47,7 @@ from .styles import (
 HISTORY_PATH = os.environ.get("RFDEBUG_HISTORY", "~/.rfdebug_history")
 
 
-class StepMode(str, Enum):
-    INTO = "INTO"
-    OVER = "OVER"
-    OUT = "OUT"
-    CONTINUE = "CONTINUE"
-    STOP = "STOP"
-
-
-class DebugCmd(PromptToolkitCmd):
+class ReplCmd(PromptToolkitCmd):
     """Interactive debug shell for robotframework."""
 
     prompt_style = DEBUG_PROMPT_STYLE
@@ -63,10 +59,6 @@ class DebugCmd(PromptToolkitCmd):
 
     def get_prompt_tokens(self, prompt_text):
         return get_debug_prompt_tokens(prompt_text)
-
-    def postcmd(self, stop, line):
-        """Run after a command."""
-        return stop
 
     def pre_loop_iter(self):
         """Reset robotframework before every loop iteration."""
@@ -81,7 +73,7 @@ class DebugCmd(PromptToolkitCmd):
 Input Robotframework keywords, or commands listed below.
 Use "libs" or "l" to see available libraries,
 use "keywords" or "k" see the list of library keywords,
-use the TAB keyboard key to autocomplete keywords.
+use CTRL+SPACE to autocomplete keywords.
 Access https://github.com/imbus/robotframework-debug for more details.\
 """,
             )
@@ -161,18 +153,16 @@ Access https://github.com/imbus/robotframework-debug for more details.\
             logger.console(f"       {lib.source}")
 
     def do_libs(self, args):
-        """Print imported and builtin libraries, with source if `-s` specified.
-
-        ls( libs ) [-s]
-        """
+        """Print imported and builtin libraries, with source if `-s` specified."""
         print_output("<", "Imported libraries:")
-        for lib in get_libs():
+        for lib in get_libraries():
             self._print_lib_info(lib, with_source_path="-s" in args)
-        print_output("<", "Builtin libraries:")
-        for name in sorted(get_builtin_libs()):
-            print_output("   " + name, "")
 
-    do_ls = do_libs
+    def do_res(self, args):
+        """Print imported and builtin libraries, with source if `-s` specified."""
+        print_output("<", "Imported resources:")
+        for lib in get_resources():
+            self._print_lib_info(lib, with_source_path="-s" in args)
 
     def do_keywords(self, args):
         """Print keywords of libraries, all or starts with <lib_name>.
@@ -224,38 +214,45 @@ Access https://github.com/imbus/robotframework-debug for more details.\
         """Append exit command to queue."""
         self.append_command("exit")
 
-    def do_OVER(self, args):  # noqa: N802
-        """Step Over."""
-        self.listener.step_mode = StepMode.OVER
-        return True
+    def do_exit(self, args):
+        """Exit debug shell."""
+        set_step_mode(on=False)  # explicitly exit REPL will disable step mode
+        self.append_exit()
+        return super().do_exit(args)
 
-    def do_INTO(self, args):  # noqa: N802
-        """Step Over."""
-        self.listener.step_mode = StepMode.INTO
-        return True
+    def onecmd(self, line):
+        # restore last command acrossing different Cmd instances
+        self.lastcmd = context.last_command
+        stop = super().onecmd(line)
+        context.last_command = self.lastcmd
+        return stop
 
-    def do_OUT(self, args):  # noqa: N802
-        """Step Over."""
-        self.listener.step_mode = StepMode.OUT
-        return True
+    def do_style(self, args):
+        """Set style of output. Usage `style    <style_name>`. Call just `style` to list all styles."""
+        styles = get_pygments_styles()
+        if not args.strip():
+            for style in styles:
+                print_output(f"> {style}    ", style, _get_print_style(style))
+            return
+        style = difflib.get_close_matches(args.strip(), styles)[0]
+        self.prompt_style = merge_styles(
+            [BASE_STYLE, style_from_pygments_cls(get_style_by_name(style))]
+        )
+        print_output("Set style to:   ", style, _get_print_style(str(style)))
 
-    def do_CONTINUE(self, args):  # noqa: N802
-        """Step Over."""
-        self.listener.step_mode = StepMode.CONTINUE
-        return True
+    def do_clear(self, args):
+        """Clear screen."""
+        clear()
 
-    def do_step(self, args):
-        """Execute the current line, stop at the first possible occasion."""
-        set_step_mode(on=True)
-        self.append_exit()  # pass control back to robot runner
+    do_cls = do_clear
 
-    do_s = do_step
 
-    def do_next(self, args):
-        """Continue execution until the next line is reached or it returns."""
-        self.do_step(args)
+class DebugCmd(ReplCmd):
+    def do_continue(self, args):
+        """Continue execution."""
+        return self.do_exit(args)
 
-    do_n = do_next
+    do_c = do_continue
 
     def do_list(self, args):
         """List source code for the current file."""
@@ -283,44 +280,6 @@ Access https://github.com/imbus/robotframework-debug for more details.\
             self.library.current_source_path,
             self.library.current_source_line,
         )
-
-    def do_continue(self, args):
-        """Continue execution."""
-        return self.do_exit(args)
-
-    def do_exit(self, args):
-        """Exit debug shell."""
-        set_step_mode(on=False)  # explicitly exit REPL will disable step mode
-        self.append_exit()
-        return super().do_exit(args)
-
-    do_c = do_continue
-
-    def onecmd(self, line):
-        # restore last command acrossing different Cmd instances
-        self.lastcmd = context.last_command
-        stop = super().onecmd(line)
-        context.last_command = self.lastcmd
-        return stop
-
-    def do_style(self, args):
-        """Set style of output. Usage `style    <style_name>`. Call just `style` to list all styles."""
-        styles = get_pygments_styles()
-        if not args.strip():
-            for style in styles:
-                print_output(f"> {style}    ", style, _get_print_style(style))
-            return
-        style = difflib.get_close_matches(args.strip(), styles)[0]
-        self.prompt_style = merge_styles(
-            [BASE_STYLE, style_from_pygments_cls(get_style_by_name(style))]
-        )
-        print_output("Set style to:   ", style, _get_print_style(str(style)))
-
-    def do_clear(self, args):
-        """Clear screen."""
-        clear()
-
-    do_cls = do_clear
 
 
 def reset_robotframework_exception():

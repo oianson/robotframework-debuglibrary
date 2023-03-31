@@ -15,7 +15,25 @@ from prompt_toolkit.output import ColorDepth
 from prompt_toolkit.shortcuts import CompleteStyle, prompt
 
 from . import RobotDebug
+from .globals import StepMode
 from .lexer import RobotFrameworkLocalLexer
+
+
+def listener():
+    from . import Listener
+
+    return Listener.instance
+
+
+def dbg_cmd():
+    return listener().library.debug_cmd
+
+
+def exec_step(step_mode: StepMode):
+    lstnr = listener()
+    lstnr.step_mode = step_mode
+    lstnr.library.debug_cmd.do_continue(None)
+
 
 kb = KeyBindings()
 
@@ -175,80 +193,49 @@ def _(event):
 @kb.add("f8")
 def _(event):
     b = event.current_buffer
-    b.text = "OVER"
+    b.text = ""
+    exec_step(StepMode.OVER)
     b.validate_and_handle()
 
 
 @kb.add("f7")
 def _(event):
     b = event.current_buffer
-    b.text = "INTO"
+    b.text = ""
+    exec_step(StepMode.INTO)
     b.validate_and_handle()
 
 
 @kb.add("f9")
 def _(event):
     b = event.current_buffer
-    b.text = "OUT"
+    b.text = ""
+    exec_step(StepMode.OUT)
     b.validate_and_handle()
 
 
 @kb.add("f10")
 def _(event):
     b = event.current_buffer
-    b.text = "CONTINUE"
+    b.text = ""
+    exec_step(StepMode.CONTINUE)
     b.validate_and_handle()
 
 
-MOUSE_MODE = True
+@kb.add("s-tab")
+def _(event):
+    b = event.current_buffer
+    b.text = ""
+    exec_step(StepMode.STOP)
+    b.validate_and_handle()
 
 
 @kb.add("f12")
 def _(event):
-    global MOUSE_MODE
-    MOUSE_MODE = not MOUSE_MODE
     b = event.current_buffer
     b.text = ""
+    dbg_cmd().toggle_mouse()
     b.validate_and_handle()
-
-
-
-
-TOOLBAR_KEY = ("", None, None)
-
-
-def set_toolbar_key(statement_type, token, cursor_pos):
-    global TOOLBAR_KEY
-    TOOLBAR_KEY = statement_type, token, cursor_pos
-
-
-def bottom_toolbar():
-    return [
-        ("class:bottom-toolbar-key", "F7: "),
-        ("class:bottom-toolbar", "INTO    "),
-        ("class:bottom-toolbar-key", "F8: "),
-        ("class:bottom-toolbar", "OVER    "),
-        ("class:bottom-toolbar-key", "F9: "),
-        ("class:bottom-toolbar", "OUT    "),
-        ("class:bottom-toolbar-key", "F10: "),
-        ("class:bottom-toolbar", "CONTINUE    "),
-        ("class:bottom-toolbar-key", "F12: "),
-        ("class:bottom-toolbar", f"Toggle Mouse ({'ON' if MOUSE_MODE else 'OFF'})    "),
-        ("class:bottom-toolbar-key", "STATEMENT: "),
-        ("class:bottom-toolbar", f"{TOOLBAR_KEY[0]}    "),
-        ("class:bottom-toolbar-key", "value: "),
-        (
-            "class:bottom-toolbar",
-            f"{TOOLBAR_KEY[1].value if TOOLBAR_KEY[1] else ''}    ",
-        ),
-        ("class:bottom-toolbar-key", "TOKEN: "),
-        (
-            "class:bottom-toolbar",
-            f"{TOOLBAR_KEY[1].type if TOOLBAR_KEY[1] else ''}    ",
-        ),
-        ("class:bottom-toolbar-key", "TOKEN: "),
-        ("class:bottom-toolbar", f"{TOOLBAR_KEY[2] if TOOLBAR_KEY[2] else ''}    "),
-    ]
 
 
 class BaseCmd(cmd.Cmd):
@@ -306,11 +293,16 @@ class BaseCmd(cmd.Cmd):
         if line is None:
             return None
 
-        if line == "exit":
+        if line == "exit" or line == "EOF":
             line = "EOF"
+            return True
+
+        line = self.precmd(line)
+        stop = self.onecmd(line)
+        stop = self.postcmd(stop, line)
 
         # do not run 'EOF' command to avoid override 'lastcmd'
-        return True if line == "EOF" else self.onecmd(line)
+        return stop
 
     def cmdloop(self, intro=None):
         """Better command loop.
@@ -335,6 +327,14 @@ class BaseCmd(cmd.Cmd):
         return input(prompt=self.prompt)
 
 
+class PrivateHistory(FileHistory):
+    def append_string(self, string: str):
+        """Append string to history file."""
+        if string.startswith("_"):
+            return
+        super().append_string(string)
+
+
 class PromptToolkitCmd(BaseCmd):
     """CMD shell using prompt-toolkit."""
 
@@ -351,13 +351,79 @@ Type "help" for more information.\
     def __init__(self, library, history_path=""):
         super().__init__()
         self.library: RobotDebug = library
-        self.history = FileHistory(str(Path(history_path).expanduser()))
+        self.history = PrivateHistory(str(Path(history_path).expanduser()))
+        self.toolbar_token_tuple = ("", None, None)
+        self.mouse_support = True
+
+    def toggle_mouse(self):
+        """Toggle mouse support."""
+        self.mouse_support = not self.mouse_support
 
     def prompt_continuation(self, width, line_number, is_soft_wrap):
         return " " * width
 
     def get_rprompt_text(self):
         return [("class:pygments.comment", "rprompt")]
+
+    TOOLBAR_KEY = ("", None, None)
+
+    def set_toolbar_key(self, statement_type, token, cursor_pos):
+        self.toolbar_token_tuple = statement_type, token, cursor_pos
+
+    def postcmd(self, stop, line):
+        """Hook method executed just after a command dispatch is finished."""
+        self.toolbar_token_tuple = ("", None, None)
+        return stop
+
+    def bottom_toolbar(self):
+        base = []
+        if not self.library.is_repl:
+            base.extend(
+                [
+                    ("class:bottom-toolbar-key", "F7: "),
+                    ("class:bottom-toolbar", "INTO    "),
+                    ("class:bottom-toolbar-key", "F8: "),
+                    ("class:bottom-toolbar", "OVER    "),
+                    ("class:bottom-toolbar-key", "F9: "),
+                    ("class:bottom-toolbar", "OUT    "),
+                    ("class:bottom-toolbar-key", "F10: "),
+                    ("class:bottom-toolbar", "CONTINUE    "),
+                    ("class:bottom-toolbar-key", "Shift+Tab: "),
+                    ("class:bottom-toolbar", "DETACH    "),
+                ]
+            )
+        base.extend(
+            [
+                ("class:bottom-toolbar-key", "F12: "),
+                (
+                    "class:bottom-toolbar",
+                    f"Toggle Mouse ({'ON' if self.mouse_support else 'OFF'})    ",
+                ),
+            ]
+        )
+        if self.toolbar_token_tuple[0]:
+            base.extend(
+                [
+                    ("class:bottom-toolbar-key", "STATEMENT: "),
+                    ("class:bottom-toolbar", f"{self.toolbar_token_tuple[0]}    "),
+                    ("class:bottom-toolbar-key", "value: "),
+                    (
+                        "class:bottom-toolbar",
+                        f"{self.toolbar_token_tuple[1].value if self.toolbar_token_tuple[1] else ''}    ",
+                    ),
+                    ("class:bottom-toolbar-key", "TOKEN: "),
+                    (
+                        "class:bottom-toolbar",
+                        f"{self.toolbar_token_tuple[1].type if self.toolbar_token_tuple[1] else ''}    ",
+                    ),
+                    ("class:bottom-toolbar-key", "TOKEN: "),
+                    (
+                        "class:bottom-toolbar",
+                        f"{self.toolbar_token_tuple[2] if self.toolbar_token_tuple[2] else ''}    ",
+                    ),
+                ]
+            )
+        return base
 
     def get_input(self):
         kwargs = {}
@@ -369,7 +435,7 @@ Type "help" for more information.\
         try:
             line = prompt(
                 auto_suggest=AutoSuggestFromHistory(),
-                bottom_toolbar=bottom_toolbar,
+                bottom_toolbar=self.bottom_toolbar,
                 clipboard=PyperclipClipboard(),
                 color_depth=ColorDepth.DEPTH_24_BIT,
                 completer=self.get_completer(),
@@ -381,7 +447,7 @@ Type "help" for more information.\
                 key_bindings=kb,
                 lexer=PygmentsLexer(RobotFrameworkLocalLexer),
                 message=prompt_str,
-                mouse_support=MOUSE_MODE,
+                mouse_support=self.mouse_support,
                 prompt_continuation=self.prompt_continuation,
                 rprompt=self.get_rprompt_text(),
                 **kwargs,

@@ -1,11 +1,12 @@
 import re
+from typing import Optional
 
 from prompt_toolkit.completion import Completer, Completion
 from robot.libraries.BuiltIn import BuiltIn
 from robot.parsing.parser.parser import _tokens_to_statements
 
 from .lexer import get_robot_token, get_variable_token
-from .prompttoolkitcmd import set_toolbar_key
+from .prompttoolkitcmd import PromptToolkitCmd
 from .robotkeyword import normalize_kw
 from .styles import _get_style_completions
 
@@ -42,7 +43,7 @@ def find_statement_details_at_cursor(cursor_col, cursor_row, statements):
 class CmdCompleter(Completer):
     """Completer for debug shell."""
 
-    def __init__(self, commands, cmd_repl=None):
+    def __init__(self, commands, cmd_repl: Optional[PromptToolkitCmd] = None):
         self.names = []
         self.displays = {}
         self.display_metas = {}
@@ -144,7 +145,7 @@ class CmdCompleter(Completer):
                 if var.col_offset <= cursor_col <= var.end_col_offset:
                     token = var
                     cursor_pos = cursor_col - var.col_offset
-            set_toolbar_key(statement_type, token, cursor_pos)
+            self.cmd_repl.set_toolbar_key(statement_type, token, cursor_pos)
             if token.type in ["ASSIGN", "VARIABLE"] or (
                 token.type == "KEYWORD" and re.fullmatch(r"[$&@]\{[^}]*}", token.value)
             ):

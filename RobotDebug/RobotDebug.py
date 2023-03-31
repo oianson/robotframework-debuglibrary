@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import sys
-from enum import Enum
 from pathlib import Path
 
 from robot.libraries.BuiltIn import BuiltIn
 
-from .debugcmd import DebugCmd, is_step_mode
+from .debugcmd import DebugCmd, ReplCmd, is_step_mode
+from .globals import StepMode
 from .styles import ERROR_STYLE, LOW_VISIBILITY_STYLE, print_output
 from .version import VERSION
 
@@ -17,14 +17,6 @@ MUTING_KEYWORDS = [
     "Run Keyword And Warn On Failure",
     "Wait Until Keyword Succeeds",
 ]
-
-
-class StepMode(str, Enum):
-    INTO = "INTO"
-    OVER = "OVER"
-    OUT = "OUT"
-    CONTINUE = "CONTINUE"
-    STOP = "STOP"
 
 
 class Listener:
@@ -44,12 +36,14 @@ class Listener:
         self.step_mode: StepMode = StepMode.CONTINUE
 
     def start_keyword(self, name, attrs):
+        if self.step_mode == StepMode.STOP:
+            return
         self.keyword_layer += 1
         if attrs["kwname"] in MUTING_KEYWORDS:
             self.mutings.append(attrs["kwname"])
 
         path = attrs["source"]
-        if path and path not in self.source_files:
+        if path and Path(path).exists() and path not in self.source_files:
             self.source_files[path] = Path(path).open().readlines()
         lineno = attrs["lineno"]
         self.library.current_source_path = path
@@ -63,12 +57,14 @@ class Listener:
             return
         self.last_keyword_layer = self.keyword_layer
 
-        print_output("> ", f"{path}:{lineno}", style=LOW_VISIBILITY_STYLE)
+        print_output(
+            "", f"{Path(path).relative_to(Path.cwd())}:{lineno}", style=LOW_VISIBILITY_STYLE
+        )
         line = self.source_files[path][lineno - 1]
-        print_output("=> ", line.rstrip())
+        print_output(f"{lineno} ->", line.rstrip())
 
         # callback debug interface
-        self.library.debug()
+        self.library._debug(muted=True)
 
     def log_message(self, message):
         if message["level"] == "FAIL":
@@ -92,7 +88,7 @@ class Listener:
                 style=ERROR_STYLE,
             )
             self.library.show_intro = True
-            self.library.debug()
+            self.library._debug(muted=True)
             self.new_error = False
         if is_step_mode():
             for var_name in attrs.get("assign", []):
@@ -114,11 +110,15 @@ class RobotDebug:
 
     def __init__(self, **kwargs):
         self.cli_listener = kwargs.get("cli_listener", False)
-        if not self.cli_listener and not Listener.instance:
-            self.ROBOT_LIBRARY_LISTENER = Listener(self, is_library=True)
+        self.ROBOT_LIBRARY_LISTENER = (
+            Listener(self, is_library=True)
+            if not self.cli_listener and not Listener.instance
+            else None
+        )
+        self.listener = self.cli_listener or Listener.instance or self.ROBOT_LIBRARY_LISTENER
         self.show_intro = True
-        self.debug_cmd = DebugCmd(self)
         self.is_repl = kwargs.get("repl", False)
+        self.debug_cmd = None
         self.current_source_line = 0
         self.current_source_path = ""
 
@@ -138,10 +138,16 @@ class RobotDebug:
         """
         # re-wire stdout so that we can use the cmd module and have readline
         # support
+        return self._debug()
+
+    def _debug(self, muted: bool = False):
+        if self.listener.step_mode == StepMode.STOP:
+            return
         old_stdout = sys.stdout
         sys.stdout = sys.__stdout__
         try:
-            if not is_step_mode():
+            self.debug_cmd = ReplCmd(self) if self.is_repl else DebugCmd(self)
+            if not is_step_mode() and not muted:
                 print_output(">>>>>", "Enter interactive shell")
             if self.show_intro:
                 self.show_intro = False
@@ -158,7 +164,7 @@ class RobotDebug:
                 intro = ""
             self.debug_cmd.cmdloop(intro=intro)
 
-            if not is_step_mode():
+            if not is_step_mode() and not muted:
                 print_output("<<<<<", "Exit shell.")
         finally:
             # put stdout back where it was

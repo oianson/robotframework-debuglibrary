@@ -1,3 +1,6 @@
+from enum import Enum
+
+
 class SingletonContext:
     in_step_mode = False
     last_command = ""
@@ -9,3 +12,11 @@ class SingletonContext:
 
 
 context = SingletonContext()
+
+
+class StepMode(str, Enum):
+    INTO = "_INTO"
+    OVER = "_OVER"
+    OUT = "_OUT"
+    CONTINUE = "_CONTINUE"
+    STOP = "_STOP"
