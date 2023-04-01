@@ -11,7 +11,7 @@ from robot.libraries.BuiltIn import BuiltIn
 from robot.running.signalhandler import STOP_SIGNAL_MONITOR
 from robot.variables import is_variable
 
-from .cmdcompleter import CmdCompleter
+from .cmdcompleter import CmdCompleter, KeywordAutoSuggestion
 from .globals import context
 from .prompttoolkitcmd import PromptToolkitCmd
 from .robotkeyword import (
@@ -57,6 +57,12 @@ class ReplCmd(PromptToolkitCmd):
         self.last_keyword_exec_time = 0
         self.listener = self.library.cli_listener or self.library.ROBOT_LIBRARY_LISTENER
 
+    def do_continue(self, args):
+        """Continue execution."""
+        return self.do_exit(args)
+
+    do_c = do_continue
+
     def get_prompt_tokens(self, prompt_text):
         return get_debug_prompt_tokens(prompt_text)
 
@@ -81,37 +87,10 @@ Access https://github.com/imbus/robotframework-debug for more details.\
 
     def get_completer(self):
         """Get completer instance specified for robotframework."""
-        commands = [
-            (cmd_name, cmd_name, f"DEBUG command: {doc}") for cmd_name, doc in self.get_helps()
-        ]
+        return CmdCompleter(get_libs(), get_keywords(), self.get_helps(), self)
 
-        for lib in get_libs():
-            commands.append(
-                (
-                    lib.name,
-                    lib.name,
-                    f"Library: {lib.name} {lib.version if hasattr(lib, 'version') else ''}",
-                )
-            )
-
-        for keyword in get_keywords():
-            name = f"{keyword.parent.name}.{keyword.name}"
-            commands.append(
-                (
-                    name,
-                    keyword.name,
-                    keyword.shortdoc,
-                )
-            )
-            commands.append(
-                (
-                    keyword.name,
-                    keyword.name,
-                    f"{keyword.shortdoc} [{keyword.parent.name}]",
-                )
-            )
-
-        return CmdCompleter(commands, self)
+    def get_auto_suggester(self):
+        return KeywordAutoSuggestion(self.get_completer())
 
     def default(self, line):
         """Run RobotFramework keywords."""
@@ -248,12 +227,6 @@ Access https://github.com/imbus/robotframework-debug for more details.\
 
 
 class DebugCmd(ReplCmd):
-    def do_continue(self, args):
-        """Continue execution."""
-        return self.do_exit(args)
-
-    do_c = do_continue
-
     def do_list(self, args):
         """List source code for the current file."""
 

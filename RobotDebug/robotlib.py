@@ -51,10 +51,15 @@ class ImportedResourceDocBuilder(ResourceDocBuilder):
 class ImportedLibraryDocBuilder(LibraryDocBuilder):
     def build(self, lib):
         libdoc = LibraryDoc(
-            name=lib.name,
             doc=self._get_doc(lib),
+            version=lib.version,
+            scope=str(lib.scope),
             doc_format=lib.doc_format,
+            source=lib.source,
+            lineno=lib.lineno,
+            name=lib.name,
         )
         libdoc.inits = self._get_initializers(lib)
         libdoc.keywords = KeywordDocBuilder().build_keywords(lib)
+        libdoc.type_docs = self._get_type_docs(libdoc.inits + libdoc.keywords, lib.converters)
         return libdoc

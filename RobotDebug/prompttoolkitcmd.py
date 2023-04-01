@@ -176,13 +176,6 @@ def _(event):
     b.exit_selection()
 
 
-@kb.add("{")
-def _(event):
-    b = event.current_buffer
-    b.insert_text("{")
-    b.insert_text("}", move_cursor=False)
-
-
 @kb.add("[")
 def _(event):
     b = event.current_buffer
@@ -365,8 +358,6 @@ Type "help" for more information.\
     def get_rprompt_text(self):
         return [("class:pygments.comment", "rprompt")]
 
-    TOOLBAR_KEY = ("", None, None)
-
     def set_toolbar_key(self, statement_type, token, cursor_pos):
         self.toolbar_token_tuple = statement_type, token, cursor_pos
 
@@ -401,29 +392,32 @@ Type "help" for more information.\
                 ),
             ]
         )
-        if self.toolbar_token_tuple[0]:
-            base.extend(
-                [
-                    ("class:bottom-toolbar-key", "STATEMENT: "),
-                    ("class:bottom-toolbar", f"{self.toolbar_token_tuple[0]}    "),
-                    ("class:bottom-toolbar-key", "value: "),
-                    (
-                        "class:bottom-toolbar",
-                        f"{self.toolbar_token_tuple[1].value if self.toolbar_token_tuple[1] else ''}    ",
-                    ),
-                    ("class:bottom-toolbar-key", "TOKEN: "),
-                    (
-                        "class:bottom-toolbar",
-                        f"{self.toolbar_token_tuple[1].type if self.toolbar_token_tuple[1] else ''}    ",
-                    ),
-                    ("class:bottom-toolbar-key", "TOKEN: "),
-                    (
-                        "class:bottom-toolbar",
-                        f"{self.toolbar_token_tuple[2] if self.toolbar_token_tuple[2] else ''}    ",
-                    ),
-                ]
-            )
+        # if self.toolbar_token_tuple[0]:
+        #     base.extend(
+        #         [
+        #             ("class:bottom-toolbar-key", "STATEMENT: "),
+        #             ("class:bottom-toolbar", f"{self.toolbar_token_tuple[0]}    "),
+        #             ("class:bottom-toolbar-key", "value: "),
+        #             (
+        #                 "class:bottom-toolbar",
+        #                 f"{self.toolbar_token_tuple[1].value if self.toolbar_token_tuple[1] else ''}    ",
+        #             ),
+        #             ("class:bottom-toolbar-key", "TOKEN: "),
+        #             (
+        #                 "class:bottom-toolbar",
+        #                 f"{self.toolbar_token_tuple[1].type if self.toolbar_token_tuple[1] else ''}    ",
+        #             ),
+        #             ("class:bottom-toolbar-key", "TOKEN: "),
+        #             (
+        #                 "class:bottom-toolbar",
+        #                 f"{self.toolbar_token_tuple[2] if self.toolbar_token_tuple[2] else ''}    ",
+        #             ),
+        #         ]
+        #     )
         return base
+
+    def get_auto_suggester(self):
+        return AutoSuggestFromHistory()
 
     def get_input(self):
         kwargs = {}
@@ -434,7 +428,7 @@ Type "help" for more information.\
             prompt_str = self.prompt
         try:
             line = prompt(
-                auto_suggest=AutoSuggestFromHistory(),
+                auto_suggest=self.get_auto_suggester(),
                 bottom_toolbar=self.bottom_toolbar,
                 clipboard=PyperclipClipboard(),
                 color_depth=ColorDepth.DEPTH_24_BIT,

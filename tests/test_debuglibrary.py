@@ -11,9 +11,7 @@ child = None
 
 
 def check_result(pattern):
-    index = child.expect(
-        [pattern, pexpect.EOF, pexpect.TIMEOUT], timeout=TIMEOUT_SECONDS
-    )
+    index = child.expect([pattern, pexpect.EOF, pexpect.TIMEOUT], timeout=TIMEOUT_SECONDS)
     try:
         assert index == 0
     except AssertionError:
@@ -76,13 +74,9 @@ def base_functional_testing():
     check_command("d Debug", "Open a interactive shell,")
 
     # var
-    check_command(
-        "@{{list}} =  Create List    hello    world", "@{{list}} = ['hello', 'world']"
-    )
+    check_command("@{{list}} =  Create List    hello    world", "@{{list}} = ['hello', 'world']")
     check_command("${list}", "['hello', 'world']")
-    check_command(
-        "&{dict} =  Create Dictionary    name=admin", "&{dict} = {'name': 'admin'}"
-    )
+    check_command("&{dict} =  Create Dictionary    name=admin", "&{dict} = {'name': 'admin'}")
     check_command("${dict.name}", "admin")
 
     # fail-safe
@@ -156,9 +150,7 @@ def step_functional_testing():
         check_command("s", "=> BuiltIn.Log To Console  working")  # step
         check_command("l", "Please upgrade robotframework")  # list
         check_command("n", "@.* = BuiltIn.Create List  hello  world")  # next
-        check_command(
-            "", "=> BuiltIn.Log To Console  another test case"
-        )  # repeat last command
+        check_command("", "=> BuiltIn.Log To Console  another test case")  # repeat last command
 
     # Exit the debug mode started by Debug keyword.
     check_command("c", "Exit shell.*" "another test case.*" "end")  # continue
