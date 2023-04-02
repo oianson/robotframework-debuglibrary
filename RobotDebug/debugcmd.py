@@ -13,6 +13,7 @@ from robot.variables import is_variable
 
 from .cmdcompleter import CmdCompleter, KeywordAutoSuggestion
 from .globals import context
+from .lexer import HEADER_MATCHER
 from .prompttoolkitcmd import PromptToolkitCmd
 from .robotkeyword import (
     _get_assignments,
@@ -279,7 +280,8 @@ def run_command(dbg_cmd, command: str) -> List[Tuple[str, str]]:
     if is_variable(command):
         return [("#", f"{command} = {BuiltIn().get_variable_value(command)!r}")]
     ctx = BuiltIn()._get_context()
-    if command.startswith("***"):
+    # if command.startswith("***"):
+    if HEADER_MATCHER.match(command):
         _import_resource_from_string(command)
         return [("i:", "Resource imported.")]
     test = get_test_body_from_string(command)

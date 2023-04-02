@@ -16,7 +16,8 @@ from prompt_toolkit.shortcuts import CompleteStyle, prompt
 
 from . import RobotDebug
 from .globals import StepMode
-from .lexer import RobotFrameworkLocalLexer
+from .history_app import run_history
+from .lexer import HEADER_MATCHER, RobotFrameworkLocalLexer
 
 
 def listener():
@@ -94,11 +95,13 @@ def _(event):
             b.apply_completion(completion)
         else:
             b.cancel_completion()
-    elif re.fullmatch(r"(FOR|IF|WHILE|TRY|\*\*).*", b.text):
-        b.newline(False)
     elif b.cursor_position == len(b.text) and re.fullmatch(r".*\n", b.text, re.DOTALL):
         b.validate_and_handle()
-    elif re.search(r"\n", b.text):
+    elif (
+        HEADER_MATCHER.match(b.text)
+        or re.fullmatch(r"(FOR|IF|WHILE|TRY).*", b.text.strip())
+        or re.search(r"\n", b.text)
+    ):
         b.newline(False)
     else:
         b.validate_and_handle()
@@ -231,6 +234,21 @@ def _(event):
     b.validate_and_handle()
 
 
+@kb.add("f4")
+def _(event):
+    b = event.current_buffer
+    b.text = "history"
+    b.validate_and_handle()
+
+
+@kb.add("f5")
+def _(event):
+    b = event.current_buffer
+    b.text = ""
+    dbg_cmd().toggle_live_completion()
+    b.validate_and_handle()
+
+
 class BaseCmd(cmd.Cmd):
     """Basic REPL tool."""
 
@@ -347,6 +365,15 @@ Type "help" for more information.\
         self.history = PrivateHistory(str(Path(history_path).expanduser()))
         self.toolbar_token_tuple = ("", None, None)
         self.mouse_support = True
+        self.complete_while_typing = False
+
+    def do_history(self, arg):
+        """Run app."""
+        run_history(self)
+
+    def toggle_live_completion(self):
+        """Toggle live completion."""
+        self.complete_while_typing = not self.complete_while_typing
 
     def toggle_mouse(self):
         """Toggle mouse support."""
@@ -385,6 +412,16 @@ Type "help" for more information.\
             )
         base.extend(
             [
+                ("class:bottom-toolbar-key", "F4: "),
+                (
+                    "class:bottom-toolbar",
+                    "Open History    ",
+                ),
+                ("class:bottom-toolbar-key", "F5: "),
+                (
+                    "class:bottom-toolbar",
+                    f"Toggle Live Completion ({'ON' if self.complete_while_typing else 'OFF'})    ",
+                ),
                 ("class:bottom-toolbar-key", "F12: "),
                 (
                     "class:bottom-toolbar",
@@ -434,8 +471,9 @@ Type "help" for more information.\
                 color_depth=ColorDepth.DEPTH_24_BIT,
                 completer=self.get_completer(),
                 complete_style=CompleteStyle.COLUMN,
+                complete_while_typing=self.complete_while_typing,
                 cursor=CursorShape.BLINKING_BEAM,
-                enable_history_search=True,
+                enable_history_search=not self.complete_while_typing,
                 history=self.history,
                 include_default_pygments_style=False,
                 key_bindings=kb,

@@ -10,8 +10,11 @@ def get_robot_token_from_file(file: Path):
     return list(get_tokens(file))
 
 
+HEADER_MATCHER = re.compile(r"\*+ ?(keywords?|settings?|variables?|comments?) ?\**", re.IGNORECASE)
+
+
 def get_robot_token(text):
-    if text.strip().startswith("**"):
+    if HEADER_MATCHER.match(text):
         yield from get_tokens(text)
     else:
         marker_len = 20

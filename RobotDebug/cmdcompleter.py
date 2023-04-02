@@ -272,7 +272,8 @@ class CmdCompleter(Completer):
                     cursor_pos = cursor_col - var.col_offset
             self.cmd_repl.set_toolbar_key(statement_type, token, cursor_pos)
             if token.type in ["ASSIGN", "VARIABLE"] or (
-                token.type in ["KEYWORD", "ARGUMENT"] and re.fullmatch(r"[$&@]\{[^}]*}?", token.value)
+                token.type in ["KEYWORD", "ARGUMENT"]
+                and re.fullmatch(r"[$&@]\{[^}]*}?", token.value)
             ):
                 yield from [
                     Completion(
