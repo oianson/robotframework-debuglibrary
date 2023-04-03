@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from typing import Optional, Union
 
 from prompt_toolkit.auto_suggest import AutoSuggest, Suggestion
 from prompt_toolkit.buffer import Buffer
@@ -301,7 +301,7 @@ class KeywordAutoSuggestion(AutoSuggest):
     def __init__(self, completer: CmdCompleter):
         self.completer = completer
 
-    def get_suggestion(self, buffer: Buffer, document: Document) -> Suggestion | None:
+    def get_suggestion(self, buffer: Buffer, document: Document) -> Union[Suggestion, None]:
         text = document.text
         completions = [compl.text for compl in self.completer.get_completions(document, None)]
         last_word = text.split("  ")[-1]
