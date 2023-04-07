@@ -47,7 +47,7 @@ setup(
         "pygments >= 2.14.0",
         "pyperclip >= 1.8.2",
     ],
-    python_requires=">=3.7.0",
+    python_requires=">=3.8.0",
     tests_require=["pexpect", "coverage", "docutils"],
     test_suite="tests.test_debuglibrary.suite",
     platforms=["Linux", "Unix", "Windows", "MacOS X"],

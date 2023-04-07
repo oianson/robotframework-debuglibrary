@@ -60,8 +60,10 @@ def run_history(context):
     history = list(
         reversed(
             [
-                re.sub(r" {2,}", "    ", e).strip()
-                for e in dict.fromkeys(reversed(his.get_strings()))
+                e
+                for e in dict.fromkeys(
+                    reversed([re.sub(r" {2,}", " " * 4, v).strip() for v in his.get_strings()])
+                )
                 if not HEADER_MATCHER.match(e)
             ]
         )
