@@ -10,7 +10,9 @@ def get_robot_token_from_file(file: Path):
     return list(get_tokens(file))
 
 
-HEADER_MATCHER = re.compile(r"\*+ ?(keywords?|settings?|variables?|comments?) ?\**", re.IGNORECASE)
+HEADER_MATCHER = re.compile(
+    r"\s*\*+ ?(keywords?|settings?|variables?|comments?) ?\**", re.IGNORECASE
+)
 
 
 def get_robot_token(text):

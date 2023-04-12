@@ -57,26 +57,8 @@ def run_history(context):
     buffer1 = Buffer()
     buffer2 = Buffer()
     his: FileHistory = context.history
-    history = list(
-        reversed(
-            [
-                e
-                for e in dict.fromkeys(
-                    reversed([re.sub(r" {2,}", " " * 4, v).strip() for v in his.get_strings()])
-                )
-                if not HEADER_MATCHER.match(e)
-            ]
-        )
-    )
-    kw_history = list(
-        reversed(
-            [
-                re.sub(r" {2,}", "    ", e).strip()
-                for e in dict.fromkeys(reversed(his.get_strings()))
-                if HEADER_MATCHER.match(e)
-            ]
-        )
-    )
+    history = get_history_content(his)
+    kw_history = get_history_content(his, False)
     buffer1.text = "\n".join(history)
     buffer1.cursor_position = len(buffer1.text)
     buffer1.read_only = Always()
@@ -146,3 +128,18 @@ def run_history(context):
         style=context.prompt_style,
     )
     app.run()
+
+
+def get_history_content(his, pure_commands: bool = True):
+    return list(
+        reversed(
+            [
+                e
+                for e in dict.fromkeys(
+                    reversed([re.sub(r" {2,}", " " * 4, v).strip() for v in his.get_strings()])
+                )
+                if (not HEADER_MATCHER.match(e) and pure_commands)
+                or (HEADER_MATCHER.match(e) and not pure_commands)
+            ]
+        )
+    )
