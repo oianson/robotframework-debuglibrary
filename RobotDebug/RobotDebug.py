@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 from robot.libraries.BuiltIn import BuiltIn
+from robot.api.deco import not_keyword
 
 from .debugcmd import DebugCmd, ReplCmd, is_step_mode
 from .globals import StepMode
@@ -122,12 +123,15 @@ class RobotDebug:
         self.current_source_line = 0
         self.current_source_path = ""
 
+    @not_keyword
     def Library(self, name, *args):  # noqa: N802
         BuiltIn().import_library(name, *args)
 
+    @not_keyword
     def Resource(self, path):  # noqa: N802
         BuiltIn().import_resource(path)
 
+    @not_keyword
     def Variables(self, path, *args):  # noqa: N802
         BuiltIn().import_variables(path, *args)
 
